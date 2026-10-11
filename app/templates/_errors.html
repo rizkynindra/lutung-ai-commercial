@@ -1,0 +1,23 @@
+<section class="doc-section" id="errors">
+  <h2>Error codes</h2>
+  <p>Errors use a consistent shape. Every response carries an <code>X-Request-Id</code> header — include it when reporting issues.</p>
+  <div class="code-card">
+    <div class="code-head"><span>Error response</span></div>
+    <pre><code>{"request_id": "req_…", "error": {"code": "RATE_LIMITED", "message": "Too many requests. Please try again later."}}</code></pre>
+  </div>
+  <table class="doc-table">
+    <thead><tr><th>Code</th><th>HTTP</th><th>Meaning / what to do</th></tr></thead>
+    <tbody>
+      <tr><td><code>INVALID_FILE</code></td><td>400 · 411 · 415</td><td>Unsupported, malformed or empty upload. Select a supported file and retry.</td></tr>
+      <tr><td><code>FILE_TOO_LARGE</code></td><td>413</td><td>Upload exceeds the size or dimension limit. Reduce file size.</td></tr>
+      <tr><td><code>UNAUTHORIZED</code></td><td>401</td><td>Missing, expired or invalid identity token. Sign in again.</td></tr>
+      <tr><td><code>CONSENT_REQUIRED</code></td><td>403</td><td>Data-handling notice must be acknowledged before using a sensitive-document service.</td></tr>
+      <tr><td><code>TRIAL_ALREADY_USED</code></td><td>403</td><td>Free trial consumed. Paid access is not available yet; contact the team for pilot access.</td></tr>
+      <tr><td><code>TRIAL_IN_PROGRESS</code></td><td>409</td><td>Another trial request for this account is processing. Wait for it to finish.</td></tr>
+      <tr><td><code>RATE_LIMITED</code></td><td>429</td><td>Request limit exceeded. Wait for the <code>Retry-After</code> interval.</td></tr>
+      <tr><td><code>SERVICE_UNAVAILABLE</code></td><td>503</td><td>Provider unavailable, busy, or under maintenance. Retry later; do not submit repeatedly.</td></tr>
+      <tr><td><code>PROCESSING_TIMEOUT</code></td><td>504</td><td>Processing exceeded the configured timeout. A trial is not consumed.</td></tr>
+      <tr><td><code>INTERNAL_ERROR</code></td><td>500</td><td>Unexpected server failure. Report the request ID.</td></tr>
+    </tbody>
+  </table>
+</section>

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Teknologi{% endblock %}
+{% block content %}
+<header class="page-head">
+  <p class="eyebrow">Katalog</p>
+  <h1>Semua teknologi</h1>
+  <p class="lead">Telusuri layanan AI yang tersedia, cek status dan model aksesnya, lalu coba langsung di Playground.</p>
+</header>
+<form class="filters" role="search" onsubmit="return false">
+  <label class="grow"><span>Cari</span><input type="search" id="q" placeholder="Nama atau deskripsi teknologi"></label>
+  <label><span>Kategori</span>
+    <select id="cat">
+      <option value="">Semua kategori</option>
+      {% for c in categories %}<option {% if c == category %}selected{% endif %}>{{ c }}</option>{% endfor %}
+    </select>
+  </label>
+  <label><span>Status</span>
+    <select id="st">
+      <option value="">Semua status</option>
+      {% for k, v in status_label.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}
+    </select>
+  </label>
+</form>
+<p id="count" class="count" role="status" aria-live="polite"></p>
+<div class="grid" id="catalog">{% for t in techs %}{% include "_card.html" %}{% endfor %}</div>
+{% if not techs %}<p>Belum ada teknologi yang terdaftar.</p>{% endif %}
+{% endblock %}
+{% block scripts %}<script>LUTUNG.initCatalog()</script>{% endblock %}

@@ -1,0 +1,20 @@
+<article class="card{% if t.status not in live %} muted{% endif %}" data-name="{{ (t.name ~ ' ' ~ t.description) | lower }}" data-category="{{ t.category }}" data-status="{{ t.status }}">
+  <div class="card-head">
+    <span class="icon" aria-hidden="true">{{ t.icon }}</span>
+    <span class="badge s-{{ t.status }}">{{ status_label[t.status] }}</span>
+  </div>
+  <p class="cat">{{ t.category }}</p>
+  <h3><a href="/technologies/{{ t.slug }}">{{ t.name }}</a></h3>
+  <p class="desc">{{ t.description }}</p>
+  {% if t.access_mode != 'none' %}<p><span class="chip">{{ access_label[t.access_mode] }}</span></p>{% endif %}
+  <div class="card-foot">
+    {% if t.playground_enabled and t.status in live %}
+      <a class="btn" href="/playground/{{ t.slug }}" data-cta="{{ t.slug }}" data-access="{{ t.access_mode }}">Coba sekarang</a>
+    {% elif t.status == 'maintenance' %}
+      <span class="foot-note">Sedang pemeliharaan</span>
+    {% else %}
+      <span class="foot-note">Segera hadir</span>
+    {% endif %}
+    {% if t.docs %}<a class="btn ghost" href="/docs/{{ t.slug }}">API Docs</a>{% endif %}
+  </div>
+</article>

@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Privasi{% endblock %}
+{% block content %}
+<div class="docs">
+  <aside class="docs-nav" aria-label="Daftar isi">
+    <p class="docs-nav-title">Daftar isi</p>
+    <a href="#ringkasan">Ringkasan</a>
+    <a href="#dikumpulkan">Data yang kami simpan</a>
+    <a href="#tidak-disimpan">Data yang tidak disimpan</a>
+    <a href="#pihak-ketiga">Pihak ketiga</a>
+    <a href="#keamanan">Keamanan</a>
+    <a href="#penggunaan">Ketentuan penggunaan</a>
+    <a href="#kontak">Kontak</a>
+  </aside>
+
+  <article class="docs-body">
+    <header class="doc-head">
+      <p class="eyebrow">Legal</p>
+      <h1>Privasi &amp; Penanganan Data</h1>
+      <p class="lead">Bagaimana LUTUNG AI memproses, menyimpan, dan melindungi data Anda.</p>
+      <p class="tags"><span class="chip">Versi pemberitahuan {{ notice_version }}</span></p>
+    </header>
+
+    <div class="callout warn-callout">
+      <strong>Draf</strong>
+      <p>Dokumen ini masih harus ditinjau tim legal/privasi sebelum peluncuran publik dan dapat berubah.</p>
+    </div>
+
+    <section class="doc-section" id="ringkasan">
+      <h2>Ringkasan</h2>
+      <div class="limits wide">
+        <div><strong>Tidak disimpan</strong><span>File yang diunggah dihapus setelah diproses.</span></div>
+        <div><strong>Tidak dicatat</strong><span>Hasil ekstraksi dan data pribadi tidak masuk log.</span></div>
+        <div><strong>Hanya untuk Anda</strong><span>Hasil hanya dikembalikan ke browser Anda.</span></div>
+      </div>
+    </section>
+
+    <section class="doc-section" id="dikumpulkan">
+      <h2>Data yang kami simpan</h2>
+      <table class="doc-table">
+        <thead><tr><th>Data</th><th>Tujuan</th></tr></thead>
+        <tbody>
+          <tr><td>ID akun Google, email, dan nama tampilan</td><td>Identifikasi akun dan masuk dengan Google.</td></tr>
+          <tr><td>Status uji coba per layanan</td><td>Menegakkan batas satu kali uji coba gratis.</td></tr>
+          <tr><td>Catatan persetujuan pemberitahuan</td><td>Bukti bahwa Anda telah membaca pemberitahuan ini.</td></tr>
+          <tr><td>Metadata permintaan: ID permintaan, layanan, status, latensi, kode error, serta format/ukuran/dimensi file</td><td>Operasional, pemecahan masalah, dan pencegahan penyalahgunaan.</td></tr>
+          <tr><td>Laporan masalah yang Anda kirim</td><td>Menindaklanjuti masalah. File tidak pernah dilampirkan otomatis.</td></tr>
+        </tbody>
+      </table>
+      <p class="muted-text">Periode retensi untuk data di atas akan ditetapkan sebelum peluncuran publik.</p>
+    </section>
+
+    <section class="doc-section" id="tidak-disimpan">
+      <h2>Data yang tidak kami simpan</h2>
+      <ul class="checks">
+        <li><strong>File gambar yang diunggah</strong> — diproses sementara untuk menghasilkan hasil, lalu dihapus setelah pemrosesan selesai.</li>
+        <li><strong>Hasil ekstraksi</strong> (misalnya NIK, nama, alamat) — hanya dikembalikan ke browser Anda, tidak disimpan dan tidak dicatat di log.</li>
+        <li><strong>Token akses</strong> — diverifikasi di server, tidak pernah dicatat di log.</li>
+      </ul>
+    </section>
+
+    <section class="doc-section" id="pihak-ketiga">
+      <h2>Pihak ketiga</h2>
+      <table class="doc-table">
+        <thead><tr><th>Layanan</th><th>Data yang dibagikan</th></tr></thead>
+        <tbody>
+          <tr><td>Google (masuk dengan Google)</td><td>Proses autentikasi akun Anda.</td></tr>
+          <tr><td>Penyedia komputasi inferensi</td><td>Gambar yang Anda unggah, semata-mata untuk diproses oleh model.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="doc-section" id="keamanan">
+      <h2>Keamanan</h2>
+      <ul class="checks">
+        <li>Identitas diverifikasi di server; batas uji coba tidak dapat diubah dari browser.</li>
+        <li>File divalidasi di server sebelum diproses, dengan batas ukuran dan rate limit.</li>
+        <li>Kredensial layanan disimpan di server dan tidak pernah dikirim ke browser.</li>
+      </ul>
+    </section>
+
+    <section class="doc-section" id="penggunaan">
+      <h2>Ketentuan penggunaan</h2>
+      <ul class="checks">
+        <li>Hanya unggah dokumen yang Anda berwenang untuk memprosesnya.</li>
+        <li>Hasil dibuat oleh mesin, dapat mengandung kesalahan, dan tidak boleh menjadi satu-satunya dasar keputusan penting.</li>
+        <li>Layanan gratis dibatasi rate limit dan dapat dihentikan sementara untuk pemeliharaan.</li>
+        <li>Dilarang menyalahgunakan, membebani, atau mencoba melewati batas uji coba layanan.</li>
+      </ul>
+    </section>
+
+    <section class="doc-section" id="kontak">
+      <h2>Kontak</h2>
+      <p>Pertanyaan tentang privasi atau penanganan data dapat disampaikan melalui formulir “Laporkan masalah” di Playground.</p>
+    </section>
+  </article>
+</div>
+{% endblock %}

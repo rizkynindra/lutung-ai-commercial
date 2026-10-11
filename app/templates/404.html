@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Tidak ditemukan{% endblock %}
+{% block content %}
+<section class="notfound">
+  <p class="notfound-code" aria-hidden="true">404</p>
+  <p class="eyebrow">Halaman tidak ditemukan</p>
+  <h1>Maaf, halaman ini tidak tersedia</h1>
+  <p class="lead">Tautan mungkin salah atau halaman telah dipindahkan. Coba salah satu tujuan berikut.</p>
+  <div class="actions">
+    <a class="btn btn-lg" href="/">Kembali ke beranda</a>
+    <a class="btn btn-lg ghost" href="/technologies">Lihat semua teknologi</a>
+  </div>
+  <nav class="notfound-links" aria-label="Tautan populer">
+    <a href="/docs">Dokumentasi API</a>
+    <a href="/about">Tentang LUTUNG AI</a>
+    <a href="/privacy">Privasi &amp; data</a>
+  </nav>
+</section>
+{% endblock %}

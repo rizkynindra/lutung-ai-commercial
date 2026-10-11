@@ -1,0 +1,52 @@
+{% extends "docs_base.html" %}
+{% block title %}Dokumentasi API{% endblock %}
+{% block doc %}
+<header class="doc-head">
+  <p class="eyebrow">API Reference · v1</p>
+  <h1>LUTUNG AI API</h1>
+  <p class="lead">Integrate LUTUNG AI services into your application over a simple HTTPS + JSON API.</p>
+</header>
+
+<div class="callout">
+  <strong>Access in this MVP</strong>
+  <p>Public self-service API keys are not available yet. Endpoints are used by the LUTUNG Playground and require a signed-in
+    LUTUNG session. Pilot developers who need integration access should contact the LUTUNG team.</p>
+</div>
+
+<section class="doc-section">
+  <h2>Base URL &amp; versioning</h2>
+  <div class="code-card">
+    <div class="code-head"><span>Base URL</span><button type="button" class="copy-btn" data-copy>Copy</button></div>
+    <pre><code>https://&lt;lutung-host&gt;/api/v1</code></pre>
+  </div>
+  <p>All endpoints are versioned under <code>/api/v1</code>. Breaking changes ship under a new version prefix.</p>
+</section>
+
+<section class="doc-section">
+  <h2>Services</h2>
+  <div class="svc-list">
+    {% for t in techs %}
+    <a class="svc" href="/docs/{{ t.slug }}">
+      <span class="icon" aria-hidden="true">{{ t.icon }}</span>
+      <span><strong>{{ t.name }}</strong><small>{{ t.docs.path }}</small></span>
+      <span class="svc-tags"><span class="chip">{{ access_label[t.access_mode] }}</span><span class="badge s-{{ t.status }}">{{ status_label[t.status] }}</span></span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="doc-section" id="endpoints">
+  <h2>Public endpoints</h2>
+  <p>No authentication required.</p>
+  <table class="doc-table">
+    <thead><tr><th>Endpoint</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><span class="method get">GET</span> <code>/api/v1/technologies</code></td><td>List all catalog entries</td></tr>
+      <tr><td><span class="method get">GET</span> <code>/api/v1/technologies/{slug}</code></td><td>Get one technology</td></tr>
+      <tr><td><span class="method get">GET</span> <code>/api/v1/health</code></td><td>Portal and per-service status</td></tr>
+    </tbody>
+  </table>
+</section>
+
+{% include "_errors.html" %}
+{% endblock %}

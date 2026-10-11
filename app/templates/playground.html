@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Playground {{ t.name }}{% endblock %}
+{% block content %}
+<nav class="crumbs" aria-label="Breadcrumb"><a href="/technologies">Teknologi</a> <span aria-hidden="true">/</span>
+  <a href="/technologies/{{ t.slug }}">{{ t.name }}</a> <span aria-hidden="true">/</span> Playground</nav>
+
+<header class="detail-head">
+  <span class="icon icon-lg" aria-hidden="true">{{ t.icon }}</span>
+  <div>
+    <p class="eyebrow">Playground</p>
+    <h1>{{ t.name }}</h1>
+    <p class="tags">
+      <span class="badge s-{{ t.status }}">{{ status_label[t.status] }}</span>
+      <span class="chip">{{ access_label[t.access_mode] }}</span>
+      {% if t.docs %}<a class="tag-link" href="/docs/{{ t.slug }}">Dokumentasi API →</a>{% endif %}
+    </p>
+  </div>
+</header>
+
+<div id="pg" class="pg" data-slug="{{ t.slug }}" data-access="{{ t.access_mode }}" data-sensitive="{{ 'true' if t.sensitive else 'false' }}"
+     data-max="{{ t.limits.max_bytes }}" data-live="{{ 'true' if t.status in live else 'false' }}">
+
+  <section class="panel pg-input" aria-labelledby="input-h">
+    <h2 id="input-h"><span class="step">1</span> Unggah gambar</h2>
+
+    {% if t.status not in live %}
+    <p class="notice warn">Layanan sedang dalam pemeliharaan atau tidak tersedia. Pengiriman dinonaktifkan sementara.</p>
+    {% endif %}
+
+    <div id="need-login" class="empty" hidden>
+      <p>Masuk dengan Google untuk menggunakan Playground.</p>
+      <button type="button" class="btn" data-signin>Masuk dengan Google</button>
+    </div>
+    <p id="trial-state" class="notice" hidden></p>
+
+    {% if t.sensitive %}
+    <div id="consent" class="consent" hidden>
+      <h3>Pemberitahuan penanganan data</h3>
+      <p>Hanya unggah dokumen yang Anda berwenang untuk memprosesnya. File dapat berisi data pribadi.
+        Gambar diproses sementara di memori, tidak disimpan setelah pemrosesan, dan tidak dicatat di log.
+        Hasil ekstraksi hanya ditampilkan kepada Anda dan tidak disimpan oleh LUTUNG.
+        Baca <a href="/privacy">kebijakan privasi</a> sebelum melanjutkan.</p>
+      <label class="check"><input type="checkbox" id="consent-check"> Saya memahami dan berwenang mengunggah dokumen ini.</label>
+      <button type="button" class="btn" id="consent-btn" disabled>Lanjutkan</button>
+    </div>
+    {% endif %}
+
+    <form id="pg-form" hidden>
+      <label for="file" class="drop">
+        <strong>Pilih atau seret gambar ke sini</strong>
+        <span>{{ t.limits.formats | join(' / ') }} · maks. {{ t.limits.max_bytes // 1048576 }} MB</span>
+      </label>
+      <input type="file" id="file" name="file" accept="image/jpeg,image/png" required>
+      <img id="preview" alt="Pratinjau gambar yang dipilih" hidden>
+      <button type="submit" class="btn btn-lg" id="submit">Proses gambar</button>
+    </form>
+
+    <p id="status" class="pg-status" role="status" aria-live="polite"></p>
+  </section>
+
+  <section class="panel pg-output" aria-labelledby="result-h">
+    <h2 id="result-h"><span class="step">2</span> Hasil</h2>
+    <div id="result-empty" class="empty"><p>Hasil pemrosesan akan tampil di sini.</p></div>
+    <div id="result" hidden>
+      <table id="kv" class="kv"></table>
+      <details class="raw" open><summary>JSON mentah</summary><pre id="raw"></pre></details>
+      <div class="actions">
+        <button type="button" class="btn ghost small" id="copy">Salin JSON</button>
+        <button type="button" class="btn ghost small" id="download">Unduh JSON</button>
+      </div>
+      <p class="muted-text">Hasil dibuat oleh mesin dan dapat mengandung kesalahan.</p>
+    </div>
+  </section>
+
+  <details id="feedback" class="panel pg-feedback" hidden>
+    <summary>Laporkan masalah</summary>
+    <p class="muted-text">Laporan hanya berisi ID permintaan, layanan, info browser, dan catatan Anda. File tidak dilampirkan.</p>
+    <label for="fb-msg">Catatan</label>
+    <textarea id="fb-msg" rows="3" maxlength="2000"></textarea>
+    <button type="button" class="btn ghost" id="fb-send">Kirim laporan</button>
+  </details>
+</div>
+{% endblock %}
+{% block scripts %}<script>LUTUNG.initPlayground()</script>{% endblock %}

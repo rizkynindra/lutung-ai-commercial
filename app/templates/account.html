@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Akun{% endblock %}
+{% block content %}
+<header class="page-head">
+  <p class="eyebrow">Akun</p>
+  <h1>Akun saya</h1>
+  <p class="lead">Kelola profil dan pantau status akses layanan Anda.</p>
+</header>
+
+<p id="acct-status" class="pg-status" role="status" aria-live="polite">Memuat…</p>
+
+<div id="acct-login" class="empty" hidden>
+  <p>Masuk dengan Google untuk melihat akun dan status uji coba Anda.</p>
+  <button type="button" class="btn" data-signin>Masuk dengan Google</button>
+</div>
+
+<div id="acct" class="acct" hidden>
+  <section class="panel profile" aria-labelledby="profile-h">
+    <h2 id="profile-h" class="visually-hidden">Profil</h2>
+    <span class="avatar" id="acct-avatar" aria-hidden="true"></span>
+    <div class="profile-info">
+      <strong id="acct-name"></strong>
+      <span id="acct-email"></span>
+      <span class="chip">Masuk dengan Google</span>
+    </div>
+    <button type="button" class="btn ghost" id="acct-signout">Keluar</button>
+  </section>
+
+  <section class="panel" aria-labelledby="access-h">
+    <h2 id="access-h">Akses layanan</h2>
+    <ul class="access-list">
+      {% for t in techs %}
+      <li class="access-row">
+        <span class="icon" aria-hidden="true">{{ t.icon }}</span>
+        <div class="access-info">
+          <strong>{{ t.name }}</strong>
+          <span>{% if t.access_mode == 'trial' %}1x uji coba gratis per akun{% else %}Gratis, tanpa LUTUNG Credits · rate limit berlaku{% endif %}</span>
+        </div>
+        {% if t.access_mode == 'trial' %}
+          <span class="badge" data-trial="{{ t.slug }}">—</span>
+        {% else %}
+          <span class="badge s-available">Aktif</span>
+        {% endif %}
+        <a class="btn ghost small" href="/playground/{{ t.slug }}" data-trial-cta="{{ t.slug if t.access_mode == 'trial' else '' }}">Buka Playground</a>
+      </li>
+      {% endfor %}
+    </ul>
+    <p class="muted-text">Akses berbayar dan LUTUNG Credits akan tersedia pada tahap berikutnya.</p>
+  </section>
+
+  <section class="panel" aria-labelledby="privacy-h">
+    <h2 id="privacy-h">Privasi &amp; data</h2>
+    <dl class="summary">
+      <dt>Pemberitahuan penanganan data</dt><dd id="acct-consent">—</dd>
+      <dt>Penyimpanan file</dt><dd>Tidak disimpan setelah diproses</dd>
+    </dl>
+    <a href="/privacy">Baca kebijakan privasi →</a>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}<script>LUTUNG.initAccount()</script>{% endblock %}

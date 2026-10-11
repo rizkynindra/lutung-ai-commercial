@@ -1,0 +1,17 @@
+[Unit]
+Description=LUTUNG AI portal
+After=network.target
+
+[Service]
+User=lutung
+WorkingDirectory=/opt/lutung
+EnvironmentFile=/etc/lutung.env
+# One worker: rate limits and concurrency caps are in-process. Trust X-Forwarded-For only from local Caddy.
+ExecStart=/opt/lutung/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1 --proxy-headers --forwarded-allow-ips 127.0.0.1
+Restart=always
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/lutung
+
+[Install]
+WantedBy=multi-user.target

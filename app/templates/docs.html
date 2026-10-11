@@ -1,0 +1,106 @@
+{% extends "docs_base.html" %}
+{% block title %}API {{ t.name }}{% endblock %}
+{% block doc %}
+<header class="doc-head">
+  <p class="eyebrow">API Reference · {{ t.category }}</p>
+  <h1>{{ t.name }}</h1>
+  <p class="lead">{{ t.description }}</p>
+  <p class="tags">
+    <span class="badge s-{{ t.status }}">{{ status_label[t.status] }}</span>
+    <span class="chip">{% if t.access_mode == 'free' %}Free · no LUTUNG Credits{% else %}1 free successful trial per account{% endif %}</span>
+    {% if t.playground_enabled and t.status in live %}<a class="tag-link" href="/playground/{{ t.slug }}">Try in Playground →</a>{% endif %}
+  </p>
+</header>
+
+<div class="endpoint">
+  <span class="method post">POST</span><code>{{ t.docs.path }}</code>
+  <button type="button" class="copy-btn" data-copy="{{ t.docs.path }}">Copy</button>
+</div>
+
+<section class="doc-section">
+  <h2>Authentication</h2>
+  <p>Send a Firebase ID token from LUTUNG Google sign-in as a bearer token. There are no public API keys in this MVP;
+    pilot developers request access from the LUTUNG team.{% if t.sensitive %} The account must also have acknowledged the current data-handling notice.{% endif %}</p>
+  <table class="doc-table">
+    <thead><tr><th>Header</th><th>Value</th><th></th></tr></thead>
+    <tbody>
+      <tr><td><code>Authorization</code></td><td><code>Bearer &lt;Firebase ID token&gt;</code></td><td><span class="req">required</span></td></tr>
+      <tr><td><code>Content-Type</code></td><td><code>multipart/form-data</code></td><td><span class="req">required</span></td></tr>
+      <tr><td><code>Content-Length</code></td><td>Request size in bytes</td><td><span class="req">required</span></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="doc-section">
+  <h2>Request body</h2>
+  <table class="doc-table">
+    <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>file</code> <span class="req">required</span></td><td>binary</td>
+        <td>Image in {{ t.limits.formats | join(' or ') }}. Max {{ t.limits.max_bytes // 1048576 }} MB and {{ t.limits.max_pixels // 1000000 }} megapixels. Type is verified server-side by decoding the image.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="doc-section">
+  <h2>Limits</h2>
+  <div class="limits">
+    <div><strong>{{ t.limits.rate_per_min }}/min</strong><span>Requests per account</span></div>
+    <div><strong>{{ t.limits.timeout_s }} s</strong><span>Processing timeout</span></div>
+    <div><strong>{{ t.limits.max_bytes // 1048576 }} MB</strong><span>Max file size</span></div>
+  </div>
+  <p>Concurrency is bounded; when the service is busy the API returns <code>503 SERVICE_UNAVAILABLE</code> with a <code>Retry-After</code> header.</p>
+</section>
+
+<section class="doc-section">
+  <h2>Example request</h2>
+  <div class="code-card">
+    <div class="code-head"><span>cURL</span><button type="button" class="copy-btn" data-copy>Copy</button></div>
+    <pre><code>curl -X POST "https://&lt;lutung-host&gt;{{ t.docs.path }}" \
+  -H "Authorization: Bearer $LUTUNG_ID_TOKEN" \
+  -F "file=@image.jpg"</code></pre>
+  </div>
+  <div class="code-card">
+    <div class="code-head"><span>JavaScript</span><button type="button" class="copy-btn" data-copy>Copy</button></div>
+    <pre><code>const form = new FormData();
+form.append("file", fileInput.files[0]);
+const res = await fetch("https://&lt;lutung-host&gt;{{ t.docs.path }}", {
+  method: "POST",
+  headers: { Authorization: `Bearer ${idToken}` },
+  body: form,
+});
+const result = await res.json();</code></pre>
+  </div>
+  <div class="code-card">
+    <div class="code-head"><span>Python</span><button type="button" class="copy-btn" data-copy>Copy</button></div>
+    <pre><code>import requests
+
+with open("image.jpg", "rb") as f:
+    res = requests.post(
+        "https://&lt;lutung-host&gt;{{ t.docs.path }}",
+        headers={"Authorization": f"Bearer {id_token}"},
+        files={"file": f},
+        timeout={{ t.limits.timeout_s + 10 }},
+    )
+print(res.json())</code></pre>
+  </div>
+</section>
+
+<section class="doc-section">
+  <h2>Example response</h2>
+  <p class="muted-text">Illustrative — field names under <code>data</code> must be confirmed against the deployed service contract.</p>
+  <div class="code-card">
+    <div class="code-head"><span><span class="http-ok">200 OK</span> application/json</span><button type="button" class="copy-btn" data-copy>Copy</button></div>
+    <pre><code>{{ example }}</code></pre>
+  </div>
+</section>
+
+{% include "_errors.html" %}
+
+<section class="doc-section">
+  <h2>Changelog</h2>
+  <table class="doc-table">
+    <tbody><tr><td><strong>v1</strong></td><td>Initial MVP release. Report issues via the Playground “Laporkan masalah” form.</td></tr></tbody>
+  </table>
+</section>
+{% endblock %}

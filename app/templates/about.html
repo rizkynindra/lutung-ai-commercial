@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Tentang{% endblock %}
+{% block content %}
+<header class="page-head">
+  <p class="eyebrow">Tentang</p>
+  <h1>Tentang LUTUNG AI</h1>
+  <p class="lead">LUTUNG AI (Lumbung Teknologi Unggulan) adalah satu pintu untuk menemukan, mencoba, dan mengintegrasikan layanan AI siap pakai.</p>
+</header>
+
+<div class="about">
+  <section class="panel">
+    <h2>Misi kami</h2>
+    <p>Membuat teknologi AI mudah ditemukan dan mudah dicoba. Setiap layanan dijelaskan dengan jelas — apa fungsinya, input dan
+      outputnya, statusnya — lalu dapat diuji langsung dari browser dan diintegrasikan lewat API yang terdokumentasi.</p>
+  </section>
+
+  <section aria-labelledby="offer-h">
+    <h2 id="offer-h" class="about-h">Yang tersedia</h2>
+    <div class="grid">
+      <a class="card link-card" href="/technologies">
+        <span class="icon" aria-hidden="true">🧭</span>
+        <h3>Katalog teknologi</h3>
+        <p class="desc">Daftar layanan beserta kemampuan, status, dan model aksesnya.</p>
+      </a>
+      <a class="card link-card" href="/playground/document-detection">
+        <span class="icon" aria-hidden="true">🧪</span>
+        <h3>Playground</h3>
+        <p class="desc">Uji layanan langsung dari browser dengan akun Google Anda.</p>
+      </a>
+      <a class="card link-card" href="/docs">
+        <span class="icon" aria-hidden="true">📘</span>
+        <h3>Dokumentasi API</h3>
+        <p class="desc">Endpoint, contoh permintaan, batasan, dan kode error.</p>
+      </a>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="principles-h">
+    <h2 id="principles-h">Prinsip kami</h2>
+    <ul class="principles">
+      <li><strong>Mudah ditemukan</strong><span>Setiap teknologi menjelaskan kegunaan, status, dan langkah berikutnya.</span></li>
+      <li><strong>Dapat diuji</strong><span>Layanan yang didukung dapat dicoba lewat antarmuka yang konsisten.</span></li>
+      <li><strong>Ramah developer</strong><span>Dokumentasi API akurat, berversi, dan dilengkapi contoh yang bisa disalin.</span></li>
+      <li><strong>Aman secara default</strong><span>Identitas, unggahan, dan batas uji coba dikendalikan di server.</span></li>
+      <li><strong>Menjaga privasi</strong><span>File tidak disimpan setelah diproses dan data pribadi tidak dicatat di log.</span></li>
+      <li><strong>Transparan</strong><span>Keterbatasan dan ketersediaan layanan disampaikan apa adanya.</span></li>
+    </ul>
+  </section>
+
+  <section class="panel" aria-labelledby="roadmap-h">
+    <h2 id="roadmap-h">Peta jalan</h2>
+    <ol class="roadmap">
+      <li class="now">
+        <span class="badge s-available">Saat ini</span>
+        <strong>Tahap 1 — MVP</strong>
+        <span>Katalog, masuk dengan Google, Document Detection (gratis), OCR KTP (1x uji coba gratis), dan dokumentasi API.</span>
+      </li>
+      <li>
+        <span class="badge s-coming_soon">Berikutnya</span>
+        <strong>Akses berbayar</strong>
+        <span>LUTUNG Credits, paket langganan, dan API key mandiri untuk integrasi produksi.</span>
+      </li>
+      <li>
+        <span class="badge s-coming_soon">Berikutnya</span>
+        <strong>Layanan baru</strong>
+        <span>General OCR, Face Matching, Text Matching, dan layanan LLM.</span>
+      </li>
+    </ol>
+  </section>
+
+  <section class="cta-panel">
+    <div>
+      <h2>Siap mencoba?</h2>
+      <p>Jelajahi katalog dan uji layanan pertama Anda dalam hitungan menit.</p>
+    </div>
+    <div class="actions">
+      <a class="btn btn-lg" href="/technologies">Jelajahi teknologi</a>
+      <a class="btn btn-lg ghost" href="/privacy">Privasi &amp; data</a>
+    </div>
+  </section>
+</div>
+{% endblock %}

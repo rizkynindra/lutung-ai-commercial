@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}{{ t.name }}{% endblock %}
+{% block content %}
+<nav class="crumbs" aria-label="Breadcrumb"><a href="/technologies">Teknologi</a> <span aria-hidden="true">/</span> {{ t.name }}</nav>
+
+<header class="detail-head">
+  <span class="icon icon-lg" aria-hidden="true">{{ t.icon }}</span>
+  <div>
+    <p class="eyebrow">{{ t.category }}</p>
+    <h1>{{ t.name }}</h1>
+    <p class="lead">{{ t.description }}</p>
+    <p class="tags">
+      <span class="badge s-{{ t.status }}">{{ status_label[t.status] }}</span>
+      {% if t.access_mode != 'none' %}<span class="chip">{{ access_label[t.access_mode] }}</span>{% endif %}
+    </p>
+  </div>
+</header>
+
+<div class="detail">
+  <div class="detail-main">
+    {% if t.status == 'beta' %}<p class="notice">Layanan ini berstatus Beta: tersedia untuk evaluasi dan mungkin memiliki keterbatasan.</p>{% endif %}
+    {% if t.status == 'maintenance' %}<p class="notice warn">Layanan sedang dalam pemeliharaan. Pengiriman permintaan dinonaktifkan sementara.</p>{% endif %}
+
+    {% if t.status == 'coming_soon' %}
+      <section class="panel">
+        <h2>Segera hadir</h2>
+        <p>Teknologi ini belum dapat digunakan. Informasi akan diperbarui saat layanan siap.</p>
+      </section>
+    {% else %}
+      {% if t.capabilities %}
+      <section class="panel">
+        <h2>Kemampuan</h2>
+        <ul class="checks">{% for c in t.capabilities %}<li>{{ c }}</li>{% endfor %}</ul>
+      </section>
+      {% endif %}
+
+      <section class="panel">
+        <h2>Input &amp; output</h2>
+        <div class="io">
+          {% if t.input %}<div><h3>Input</h3><p>{{ t.input }}</p></div>{% endif %}
+          {% if t.output %}<div><h3>Output</h3><p>{{ t.output }}</p></div>{% endif %}
+        </div>
+      </section>
+
+      {% if t.limitations %}
+      <section class="panel">
+        <h2>Keterbatasan</h2>
+        <ul>{% for c in t.limitations %}<li>{{ c }}</li>{% endfor %}</ul>
+      </section>
+      {% endif %}
+    {% endif %}
+  </div>
+
+  <aside class="detail-side panel" aria-label="Ringkasan">
+    <h2>Ringkasan</h2>
+    <dl class="summary">
+      <dt>Status</dt><dd>{{ status_label[t.status] }}</dd>
+      <dt>Kategori</dt><dd>{{ t.category }}</dd>
+      <dt>Akses</dt><dd>{% if t.access_mode == 'free' %}Gratis, tanpa LUTUNG Credits{% elif t.access_mode == 'trial' %}1x uji coba gratis per akun{% else %}Belum tersedia{% endif %}</dd>
+      {% if t.limits %}
+      <dt>Format</dt><dd>{{ t.limits.formats | join(', ') }}</dd>
+      <dt>Ukuran maks.</dt><dd>{{ t.limits.max_bytes // 1048576 }} MB</dd>
+      <dt>Rate limit</dt><dd>{{ t.limits.rate_per_min }} permintaan/menit</dd>
+      {% endif %}
+    </dl>
+    {% if t.access_mode in ('free', 'trial') %}<p class="side-note">Wajib masuk dengan Google untuk mencoba.</p>{% endif %}
+    <div class="side-actions">
+      {% if t.playground_enabled and t.status in live %}<a class="btn btn-lg" href="/playground/{{ t.slug }}">Coba di Playground</a>{% endif %}
+      {% if t.docs %}<a class="btn btn-lg ghost" href="/docs/{{ t.slug }}">Dokumentasi API</a>{% endif %}
+    </div>
+  </aside>
+</div>
+{% endblock %}

@@ -1,0 +1,11 @@
+lutung.ai.id {
+	encode gzip
+	reverse_proxy 127.0.0.1:8000
+	request_body {
+		max_size 6MB
+	}
+}
+
+www.lutung.ai.id {
+	redir https://lutung.ai.id{uri} permanent
+}

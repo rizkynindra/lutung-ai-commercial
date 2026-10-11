@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+  <p class="eyebrow">Selamat Datang di LUTUNG AI</p>
+  <h1>Lumbung Teknologi Unggulan</h1>
+  <p class="lead">Satu portal untuk menemukan, menguji, dan mengintegrasikan layanan AI siap pakai, mulai dari deteksi dokumen hingga ekstraksi data KTP.</p>
+  <div class="actions">
+    <a class="btn btn-lg" href="/technologies">Jelajahi teknologi</a>
+    <a class="btn btn-lg ghost" href="/docs">Dokumentasi API</a>
+  </div>
+  <ul class="highlights">
+    <li><strong>Playground</strong><span>Coba dulu, kalau suka lanjut langganan</span></li>
+    <li><strong>Masuk dengan Google</strong><span>Langsung saja sign up/login via google biar ga banyak intro</span></li>
+    <li><strong>Siap diintegrasikan</strong><span>Mau integrasi? Gas pakai API nya</span></li>
+  </ul>
+</section>
+
+<section aria-labelledby="featured">
+  <div class="section-head">
+    <h2 id="featured">Teknologi unggulan</h2>
+    <a href="/technologies">Lihat semua →</a>
+  </div>
+  <div class="grid">{% for t in featured %}{% include "_card.html" %}{% endfor %}</div>
+</section>
+{% endblock %}

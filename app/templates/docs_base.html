@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="docs">
+  <aside class="docs-nav" aria-label="Navigasi dokumentasi">
+    <p class="docs-nav-title">Getting started</p>
+    <a href="/docs" {% if not t %}aria-current="page"{% endif %}>Overview</a>
+    <a href="/docs#endpoints">Public endpoints</a>
+    <a href="/docs#errors">Error codes</a>
+    <p class="docs-nav-title">Services</p>
+    {% for x in techs %}
+      <a href="/docs/{{ x.slug }}" {% if t and t.slug == x.slug %}aria-current="page"{% endif %}>
+        <span class="method post">POST</span> {{ x.name }}</a>
+    {% endfor %}
+  </aside>
+  <article class="docs-body">
+    {% block doc %}{% endblock %}
+  </article>
+</div>
+{% endblock %}
