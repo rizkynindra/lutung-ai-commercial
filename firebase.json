@@ -1,0 +1,15 @@
+{
+  "auth": {
+    "providers": {
+      "emailPassword": true,
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "LUTUNG AI",
+        "supportEmail": "rizkynindra@gmail.com",
+        "authorizedRedirectUris": [
+          "https://lutung.ai.id",
+          "http://localhost"
+        ]
+      }
+    }
+  }
+}

@@ -60,6 +60,24 @@
     <span>© 2026 LUTUNG AI. Seluruh hak dilindungi oleh Tuhan Yang Maha Esa</span>
   </div>
 </footer>
+<dialog id="auth-dialog" class="auth-dialog" aria-labelledby="auth-title">
+  <form id="auth-form" class="auth-form">
+    <h2 id="auth-title">Masuk</h2>
+    <p class="lead-in">Pakai Google, atau email dan kata sandi.</p>
+    <button type="button" class="btn" id="auth-google">Masuk dengan Google</button>
+    <p class="auth-split">atau</p>
+    <label>Email
+      <input type="email" name="email" autocomplete="username" required>
+    </label>
+    <label>Kata sandi
+      <input type="password" name="password" autocomplete="current-password" minlength="6" required>
+    </label>
+    <p id="auth-error" class="auth-error" role="alert"></p>
+    <button type="submit" class="btn">Masuk</button>
+    <button type="button" class="btn ghost" id="auth-signup">Buat akun</button>
+    <button type="button" class="btn ghost" id="auth-close">Tutup</button>
+  </form>
+</dialog>
 <script>window.LUTUNG_CONFIG = {{ {"firebase": firebase, "devAuth": dev_auth, "noticeVersion": notice_version} | tojson }};</script>
 {% if firebase.apiKey %}
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>

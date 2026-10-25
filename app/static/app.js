@@ -19,14 +19,35 @@
   };
   const POST_TRIAL = MSG.TRIAL_ALREADY_USED;
 
+  const AUTH_ERR = {
+    "auth/invalid-email": "Email tidak valid.",
+    "auth/missing-password": "Isi kata sandi.",
+    "auth/weak-password": "Kata sandi minimal 6 karakter.",
+    "auth/email-already-in-use": "Email ini sudah terdaftar. Silakan masuk.",
+    "auth/invalid-credential": "Email atau kata sandi salah.",
+    "auth/user-not-found": "Email atau kata sandi salah.",
+    "auth/wrong-password": "Email atau kata sandi salah.",
+    "auth/too-many-requests": "Terlalu banyak percobaan. Coba lagi nanti.",
+    "auth/unauthorized-domain": "Domain ini belum diizinkan untuk masuk dengan Google.",
+    "auth/operation-not-allowed": "Metode masuk ini belum diaktifkan.",
+    "auth/popup-blocked": "Browser memblokir jendela Google. Izinkan popup, lalu coba lagi.",
+    "auth/network-request-failed": "Tidak tersambung ke Firebase. Periksa jaringan Anda.",
+  };
+  const PROVIDER_LABEL = { "google.com": "Masuk dengan Google", password: "Masuk dengan email" };
+
   function store(fn) { try { return fn(); } catch (e) { return null; } }
   function emit() { renderAuth(); listeners.forEach((f) => f(user)); }
   function onAuth(f) { listeners.push(f); if (user !== undefined) f(user); }
+  function authErrorText(e) { return AUTH_ERR[e && e.code] || "Gagal masuk. Silakan coba lagi."; }
+  function profile(u) {
+    const provider = (u.providerData[0] && u.providerData[0].providerId) || "password";
+    return { email: u.email, name: u.displayName, provider };
+  }
 
-  if (cfg.firebase.apiKey && window.firebase) {
+  if (!cfg.devAuth && cfg.firebase.apiKey && window.firebase) {
     firebase.initializeApp(cfg.firebase);
     fb = firebase.auth();
-    fb.onAuthStateChanged((u) => { user = u ? { email: u.email } : null; emit(); });
+    fb.onAuthStateChanged((u) => { user = u ? profile(u) : null; emit(); });
   } else {
     const t = cfg.devAuth && store(() => localStorage.getItem("lutung_dev_token"));
     user = t ? { email: t.split(":")[2] } : null;
@@ -39,16 +60,61 @@
     return null;
   }
 
-  async function signIn() {
-    if (fb) {
-      try { await fb.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
-      catch (e) { if (e.code !== "auth/popup-closed-by-user") alert("Gagal masuk dengan Google. Silakan coba lagi."); }
-    } else if (cfg.devAuth) {
+  function showAuthError(e) {
+    const el = $("auth-error");
+    if (el) el.textContent = e && e.code ? authErrorText(e) : "";
+  }
+
+  async function googleSignIn() {
+    showAuthError({ code: "" });
+    try {
+      await fb.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+      $("auth-dialog").close();
+    } catch (e) {
+      if (e.code !== "auth/popup-closed-by-user") showAuthError(e);
+    }
+  }
+
+  async function emailAuth(create) {
+    const form = $("auth-form");
+    if (!form.reportValidity()) return;
+    form.password.autocomplete = create ? "new-password" : "current-password";
+    showAuthError({ code: "" });
+    try {
+      const email = form.email.value.trim();
+      const password = form.password.value;
+      if (create) await fb.createUserWithEmailAndPassword(email, password);
+      else await fb.signInWithEmailAndPassword(email, password);
+      form.reset();
+      $("auth-dialog").close();
+    } catch (e) {
+      showAuthError(e);
+    }
+  }
+
+  function bindAuthDialog() {
+    const dialog = $("auth-dialog");
+    const form = $("auth-form");
+    if (!dialog || !form) return;
+    dialog.addEventListener("click", (e) => { if (e.target === dialog) dialog.close(); });
+    $("auth-close").addEventListener("click", () => dialog.close());
+    $("auth-google").addEventListener("click", googleSignIn);
+    $("auth-signup").addEventListener("click", () => emailAuth(true));
+    form.addEventListener("submit", (e) => { e.preventDefault(); emailAuth(false); });
+  }
+
+  function signIn() {
+    if (cfg.devAuth) {
       const email = prompt("Dev sign-in (LUTUNG_DEV_AUTH): email");
       if (email) { store(() => localStorage.setItem("lutung_dev_token", `dev:${email}:${email}`)); user = { email }; emit(); }
-    } else {
-      alert("Masuk dengan Google belum dikonfigurasi di server ini.");
+      return;
     }
+    if (!fb) {
+      alert("Masuk belum dikonfigurasi di server ini.");
+      return;
+    }
+    showAuthError({ code: "" });
+    $("auth-dialog").showModal();
   }
 
   async function signOut() {
@@ -70,11 +136,12 @@
       btn.textContent = "Keluar"; btn.onclick = signOut;
       area.append(a, btn);
     } else {
-      btn.textContent = "Masuk dengan Google"; btn.dataset.signin = "";
+      btn.textContent = "Masuk"; btn.dataset.signin = "";
       area.append(btn);
     }
   }
 
+  bindAuthDialog();
   document.addEventListener("click", (e) => { if (e.target.closest("[data-signin]")) signIn(); });
 
   // Docs: copy buttons copy their data-copy value, or the code block in the same card.
@@ -265,6 +332,7 @@
       $("acct-status").textContent = "";
       $("acct-name").textContent = name;
       $("acct-email").textContent = me.email || "";
+      $("acct-provider").textContent = PROVIDER_LABEL[u.provider] || "Masuk";
       $("acct-avatar").textContent = name.trim().charAt(0).toUpperCase();
       $("acct-consent").textContent = me.consent ? "Sudah disetujui" : "Belum disetujui";
       document.querySelectorAll("[data-trial]").forEach((el) => {

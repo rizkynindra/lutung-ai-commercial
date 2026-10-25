@@ -1,10 +1,40 @@
-"""Firebase (Google sign-in) ID-token verification. The browser is never trusted for identity."""
+"""Firebase ID-token verification. The browser is never trusted for identity."""
+import json
 import os
+from pathlib import Path
 
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 
-PROJECT_ID = os.getenv("FIREBASE_PROJECT_ID", "")
+# Public web config. Env vars override it so a server can point at another Firebase project.
+_WEB_KEYS = {
+    "apiKey": "FIREBASE_API_KEY",
+    "authDomain": "FIREBASE_AUTH_DOMAIN",
+    "projectId": "FIREBASE_PROJECT_ID",
+    "storageBucket": "FIREBASE_STORAGE_BUCKET",
+    "messagingSenderId": "FIREBASE_MESSAGING_SENDER_ID",
+    "appId": "FIREBASE_APP_ID",
+    "measurementId": "FIREBASE_MEASUREMENT_ID",
+}
+
+
+def web_config():
+    path = Path(__file__).with_name("firebase_web.json")
+    try:
+        file_cfg = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        file_cfg = {}
+    if not isinstance(file_cfg, dict):
+        file_cfg = {}
+    out = {}
+    for key, env_name in _WEB_KEYS.items():
+        value = os.getenv(env_name) or file_cfg.get(key) or ""
+        if value:
+            out[key] = value
+    return out
+
+
+PROJECT_ID = web_config().get("projectId", "")
 # Dev-only bypass: token "dev:<subject>:<email>". Refused unless LUTUNG_ENV=development.
 DEV_AUTH = os.getenv("LUTUNG_ENV") == "development" and os.getenv("LUTUNG_DEV_AUTH") == "1"
 

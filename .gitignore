@@ -9,3 +9,6 @@ PRD
 tests
 .claude
 TUTORIAL.md
+.firebase/
+.agents/
+skills-lock.json

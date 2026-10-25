@@ -54,8 +54,7 @@ app = FastAPI(title="LUTUNG AI", docs_url=None, redoc_url=None, openapi_url=None
 app.mount("/static", StaticFiles(directory=BASE / "static"), name="static")
 templates = Jinja2Templates(directory=BASE / "templates")
 templates.env.globals.update(
-    firebase={"apiKey": os.getenv("FIREBASE_API_KEY", ""), "authDomain": os.getenv("FIREBASE_AUTH_DOMAIN", ""),
-              "projectId": os.getenv("FIREBASE_PROJECT_ID", "")},
+    firebase=auth.web_config(),
     dev_auth=auth.DEV_AUTH, notice_version=NOTICE_VERSION,
     status_label={"available": "Tersedia", "beta": "Beta", "coming_soon": "Segera Hadir",
                   "maintenance": "Pemeliharaan", "unavailable": "Tidak Tersedia"},
