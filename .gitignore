@@ -12,3 +12,4 @@ TUTORIAL.md
 .firebase/
 .agents/
 skills-lock.json
+app/firebase_web.json

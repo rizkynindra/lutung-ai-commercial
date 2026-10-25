@@ -1,12 +1,9 @@
 """Firebase ID-token verification. The browser is never trusted for identity."""
-import json
 import os
-from pathlib import Path
 
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 
-# Public web config. Env vars override it so a server can point at another Firebase project.
 _WEB_KEYS = {
     "apiKey": "FIREBASE_API_KEY",
     "authDomain": "FIREBASE_AUTH_DOMAIN",
@@ -19,19 +16,12 @@ _WEB_KEYS = {
 
 
 def web_config():
-    path = Path(__file__).with_name("firebase_web.json")
-    try:
-        file_cfg = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        file_cfg = {}
-    if not isinstance(file_cfg, dict):
-        file_cfg = {}
-    out = {}
-    for key, env_name in _WEB_KEYS.items():
-        value = os.getenv(env_name) or file_cfg.get(key) or ""
-        if value:
-            out[key] = value
-    return out
+    """Return the public Firebase web config supplied by the server environment."""
+    return {
+        key: value
+        for key, env_name in _WEB_KEYS.items()
+        if (value := os.getenv(env_name, ""))
+    }
 
 
 PROJECT_ID = web_config().get("projectId", "")
