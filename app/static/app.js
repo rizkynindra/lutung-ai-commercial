@@ -179,11 +179,14 @@
   onAuth(async (u) => {
     const ctas = document.querySelectorAll("[data-cta]");
     if (!ctas.length || u === undefined) return;
-    let trials = {};
-    if (u) { const r = await api("/api/v1/me"); if (r.ok) trials = r.body.trials; }
+    let trials = {}, admin = false;
+    if (u) {
+      const r = await api("/api/v1/me");
+      if (r.ok) { trials = r.body.trials; admin = !!r.body.admin; }
+    }
     ctas.forEach((a) => {
       if (!u) a.textContent = "Masuk untuk mencoba";
-      else if (a.dataset.access === "trial" && trials[a.dataset.cta] === "CONSUMED") a.textContent = "Uji coba terpakai";
+      else if (!admin && a.dataset.access === "trial" && trials[a.dataset.cta] === "CONSUMED") a.textContent = "Uji coba terpakai";
       else a.textContent = "Coba sekarang";
     });
   });
@@ -208,7 +211,7 @@
     const pg = $("pg"), slug = pg.dataset.slug, trial = pg.dataset.access === "trial";
     const sensitive = pg.dataset.sensitive === "true", maxBytes = +pg.dataset.max;
     const form = $("pg-form"), status = $("status"), file = $("file"), preview = $("preview");
-    let lastRid = null, lastJson = "";
+    let lastRid = null, lastJson = "", admin = false;
 
     function show(id, on) { const x = $(id); if (x) x.hidden = !on; }
     function postTrial() { $("trial-state").textContent = POST_TRIAL; show("trial-state", true); show("pg-form", false); }
@@ -221,13 +224,17 @@
       const r = await api("/api/v1/me");
       status.textContent = "";
       if (!r.ok) { status.textContent = errorText(r); return; }
+      admin = !!r.body.admin;
       show("feedback", true);
-      if (trial) {
+      if (trial && !admin) {
         const s = r.body.trials[slug];
         if (s === "CONSUMED") return postTrial();
         $("trial-state").textContent = s === "RESERVED"
           ? "Permintaan uji coba Anda sedang diproses."
           : "Uji coba gratis tersedia: 1 kali pemrosesan yang berhasil untuk akun Anda.";
+        show("trial-state", true);
+      } else if (trial && admin) {
+        $("trial-state").textContent = "Akun admin: kuota uji coba tidak berlaku. Batas permintaan per menit tetap berjalan.";
         show("trial-state", true);
       }
       if (sensitive && !r.body.consent) return show("consent", true);
@@ -270,13 +277,13 @@
       lastRid = r.body.request_id || null;
       if (!r.ok) {
         status.textContent = errorText(r);
-        if (r.body.error && r.body.error.code === "TRIAL_ALREADY_USED") postTrial();
+        if (!admin && r.body.error && r.body.error.code === "TRIAL_ALREADY_USED") postTrial();
         if (r.status === 401) show("need-login", true);
         return;
       }
       status.textContent = "Selesai.";
       renderResult(r.body.data || {});
-      if (trial) postTrial();
+      if (trial && !admin) postTrial();
     });
 
     function renderResult(data) {
@@ -333,15 +340,28 @@
       $("acct-name").textContent = name;
       $("acct-email").textContent = me.email || "";
       $("acct-provider").textContent = PROVIDER_LABEL[u.provider] || "Masuk";
+      $("acct-admin").hidden = !me.admin;
       $("acct-avatar").textContent = name.trim().charAt(0).toUpperCase();
       $("acct-consent").textContent = me.consent ? "Sudah disetujui" : "Belum disetujui";
+      document.querySelectorAll("[data-trial-note]").forEach((el) => {
+        el.textContent = me.admin
+          ? "Kuota uji coba tidak berlaku untuk akun admin"
+          : "1x uji coba gratis per akun";
+      });
       document.querySelectorAll("[data-trial]").forEach((el) => {
+        if (me.admin) {
+          el.textContent = "Tidak dibatasi";
+          el.className = "badge s-available";
+          return;
+        }
         const [text, cls] = LABEL[me.trials[el.dataset.trial]] || ["—", ""];
         el.textContent = text;
         el.className = "badge " + cls;
       });
       document.querySelectorAll("[data-trial-cta]").forEach((a) => {
-        if (a.dataset.trialCta && me.trials[a.dataset.trialCta] === "CONSUMED") a.textContent = "Lihat detail";
+        if (!a.dataset.trialCta) return;
+        const used = !me.admin && me.trials[a.dataset.trialCta] === "CONSUMED";
+        a.textContent = used ? "Lihat detail" : "Buka Playground";
       });
       $("acct").hidden = false;
     });

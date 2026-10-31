@@ -124,7 +124,9 @@ def validate_image(data, limits):
 
 def current_user(request):
     ident = auth.verify(request.headers.get("authorization"))
-    return db.upsert_user(ident["provider"], ident["subject"], ident["email"], ident["name"])
+    user = db.upsert_user(ident["provider"], ident["subject"], ident["email"], ident["name"])
+    user["admin"] = auth.is_admin(ident)
+    return user
 
 
 # ---------- API ----------
@@ -153,7 +155,7 @@ def me(request: Request):
         return err(request.state.rid, "UNAUTHORIZED", "Sign in again.", 401)
     trials = {t["slug"]: db.trial_status(user["id"], t["slug"]) for t in registry() if t.get("access_mode") == "trial"}
     return {"email": user["email"], "display_name": user["display_name"], "trials": trials,
-            "consent": db.has_consent(user["id"], NOTICE_VERSION)}
+            "admin": user["admin"], "consent": db.has_consent(user["id"], NOTICE_VERSION)}
 
 
 @app.post("/api/v1/consent")
@@ -230,7 +232,8 @@ async def playground_run(slug: str, request: Request):
     if sem.locked():
         return err(rid, "SERVICE_UNAVAILABLE", "Service is busy. Please retry shortly.", 503, {"Retry-After": "10"})
 
-    trial = t["access_mode"] == "trial"
+    # Admins skip the one-success trial cap. Per-minute rate limits above still apply.
+    trial = t["access_mode"] == "trial" and not user["admin"]
     if trial:
         state = db.reserve_trial(user["id"], slug, rid, lease_s=limits["timeout_s"] + 60)
         if state == "CONSUMED":
@@ -248,7 +251,8 @@ async def playground_run(slug: str, request: Request):
             if trial:
                 db.settle_trial(user["id"], slug, rid, False, e.code)
             db.record_execution(rid, user["id"], slug, "failed", started, e.code, meta_json)
-            log(event="playground", request_id=rid, technology=slug, outcome="failed", error=e.code)
+            log(event="playground", request_id=rid, technology=slug, outcome="failed", error=e.code,
+                admin=user["admin"])
             msg = "Processing timed out." if e.code == "PROCESSING_TIMEOUT" else "Service unavailable. Retry later."
             return err(rid, e.code, msg, 504 if e.code == "PROCESSING_TIMEOUT" else 503)
         except BaseException:
@@ -258,7 +262,7 @@ async def playground_run(slug: str, request: Request):
     if trial:
         db.settle_trial(user["id"], slug, rid, True)
     db.record_execution(rid, user["id"], slug, "success", started, None, meta_json)
-    log(event="playground", request_id=rid, technology=slug, outcome="success",
+    log(event="playground", request_id=rid, technology=slug, outcome="success", admin=user["admin"],
         latency_ms=int((time.time() - started) * 1000))
     return {"request_id": rid, "status": "success", "technology": slug, "data": output}
 

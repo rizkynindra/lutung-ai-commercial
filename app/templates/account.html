@@ -22,6 +22,7 @@
       <strong id="acct-name"></strong>
       <span id="acct-email"></span>
       <span class="chip" id="acct-provider">Masuk</span>
+      <span class="chip" id="acct-admin" hidden>Admin</span>
     </div>
     <button type="button" class="btn ghost" id="acct-signout">Keluar</button>
   </section>
@@ -34,7 +35,7 @@
         <span class="icon" aria-hidden="true">{{ t.icon }}</span>
         <div class="access-info">
           <strong>{{ t.name }}</strong>
-          <span>{% if t.access_mode == 'trial' %}1x uji coba gratis per akun{% else %}Gratis, tanpa LUTUNG Credits · rate limit berlaku{% endif %}</span>
+          <span {% if t.access_mode == 'trial' %}data-trial-note="{{ t.slug }}"{% endif %}>{% if t.access_mode == 'trial' %}1x uji coba gratis per akun{% else %}Gratis, tanpa LUTUNG Credits · rate limit berlaku{% endif %}</span>
         </div>
         {% if t.access_mode == 'trial' %}
           <span class="badge" data-trial="{{ t.slug }}">—</span>
