@@ -19,7 +19,7 @@
             onclick="const o=this.getAttribute('aria-expanded')!=='true';this.setAttribute('aria-expanded',o);document.getElementById('nav').classList.toggle('open',o)">☰</button>
     <nav id="nav" aria-label="Navigasi utama">
       <div class="nav-links">
-        {% for href, label, prefix in [("/technologies", "Teknologi", "/technologies"), ("/playground/document-detection", "Playground", "/playground"),
+        {% for href, label, prefix in [("/technologies", "Teknologi", "/technologies"),
                                        ("/docs", "Dokumentasi API", "/docs"), ("/about", "Tentang", "/about")] %}
         <a href="{{ href }}" {% if path.startswith(prefix) %}aria-current="page"{% endif %}>{{ label }}</a>
         {% endfor %}
