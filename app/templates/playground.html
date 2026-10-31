@@ -17,11 +17,11 @@
   </div>
 </header>
 
-<div id="pg" class="pg" data-slug="{{ t.slug }}" data-access="{{ t.access_mode }}" data-sensitive="{{ 'true' if t.sensitive else 'false' }}"
+<div id="pg" class="pg" data-slug="{{ t.slug }}" data-kind="{{ t.playground_kind or 'image' }}" data-access="{{ t.access_mode }}" data-sensitive="{{ 'true' if t.sensitive else 'false' }}"
      data-max="{{ t.limits.max_bytes }}" data-live="{{ 'true' if t.status in live else 'false' }}">
 
   <section class="panel pg-input" aria-labelledby="input-h">
-    <h2 id="input-h"><span class="step">1</span> Unggah gambar</h2>
+    <h2 id="input-h"><span class="step">1</span> {% if t.playground_kind == 'generate' %}Prompt Anda{% else %}Unggah gambar{% endif %}</h2>
 
     {% if t.status not in live %}
     <p class="notice warn">Layanan sedang dalam pemeliharaan atau tidak tersedia. Pengiriman dinonaktifkan sementara.</p>
@@ -45,6 +45,60 @@
     </div>
     {% endif %}
 
+    {% if t.playground_kind == 'generate' %}
+    <form id="pg-form" class="pg-fields" hidden>
+      <fieldset class="mode-switch">
+        <legend>Pilih cara</legend>
+        <label class="mode-option"><input type="radio" name="mode" value="create" checked> Buat gambar</label>
+        <label class="mode-option"><input type="radio" name="mode" value="edit"> Ubah gambar</label>
+      </fieldset>
+      <div id="source-field" hidden>
+        <label for="source-file" class="drop">
+          <strong>Unggah gambar yang ingin diubah</strong>
+          <span>{{ t.limits.formats | join(' / ') }} · maks. {{ t.limits.max_bytes // 1048576 }} MB</span>
+        </label>
+        <input type="file" id="source-file" name="file" accept="image/jpeg,image/png">
+        <img id="source-preview" alt="Pratinjau gambar yang akan diubah" width="640" height="360" hidden>
+        <label class="check" id="transparent-field" for="as-transparent">
+          <input type="checkbox" id="as-transparent"> Hasil dengan latar transparan
+        </label>
+      </div>
+      <label class="prompt-label" for="prompt">Prompt Anda
+        <textarea id="prompt" name="prompt" rows="6" maxlength="{{ t.limits.prompt_max }}" required placeholder="Tulis prompt Anda di sini" aria-describedby="prompt-hint"></textarea>
+      </label>
+      <p class="field-hint" id="prompt-hint">Tulis prompt Anda. Gambar baru dibuat dari teks ini.</p>
+      <details class="advanced">
+        <summary>Ukuran dan pengaturan lain</summary>
+        <label for="negative">Yang dihindari
+          <textarea id="negative" name="negative_prompt" rows="2" maxlength="{{ t.limits.prompt_max }}" placeholder="Opsional"></textarea>
+        </label>
+        <div class="field-row thirds">
+          <label for="width">Lebar
+            <input id="width" name="width" type="number" inputmode="numeric" required
+                   min="{{ t.limits.size_min }}" max="{{ t.limits.size_max }}" step="{{ t.limits.size_step }}"
+                   value="{{ t.limits.default_size }}" aria-describedby="size-hint">
+          </label>
+          <label for="height">Tinggi
+            <input id="height" name="height" type="number" inputmode="numeric" required
+                   min="{{ t.limits.size_min }}" max="{{ t.limits.size_max }}" step="{{ t.limits.size_step }}"
+                   value="{{ t.limits.default_size }}" aria-describedby="size-hint">
+          </label>
+          <label for="steps">Steps
+            <input id="steps" name="steps" type="number" inputmode="numeric" required
+                   min="{{ t.limits.steps_min }}" max="{{ t.limits.steps_max }}" step="1"
+                   value="{{ t.limits.steps_default }}" aria-describedby="size-hint">
+          </label>
+        </div>
+        <p class="field-hint" id="size-hint">Lebar dan tinggi kelipatan {{ t.limits.size_step }}, dari {{ t.limits.size_min }} sampai {{ t.limits.size_max }} piksel. Steps {{ t.limits.steps_min }} sampai {{ t.limits.steps_max }}.</p>
+        <label for="seed">Seed
+          <input id="seed" name="seed" type="number" inputmode="numeric" min="0" max="2147483647" step="1" aria-describedby="seed-hint">
+        </label>
+        <p class="field-hint" id="seed-hint">Kosongkan untuk angka acak.</p>
+      </details>
+      <p class="field-hint">Pembuatan gambar bisa berjalan beberapa menit.</p>
+      <button type="submit" class="btn btn-lg" id="submit">Buat gambar</button>
+    </form>
+    {% else %}
     <form id="pg-form" hidden>
       <label for="file" class="drop">
         <strong>Pilih atau seret gambar ke sini</strong>
@@ -54,6 +108,7 @@
       <img id="preview" alt="Pratinjau gambar yang dipilih" hidden>
       <button type="submit" class="btn btn-lg" id="submit">Proses gambar</button>
     </form>
+    {% endif %}
 
     <p id="status" class="pg-status" role="status" aria-live="polite"></p>
   </section>
@@ -62,11 +117,12 @@
     <h2 id="result-h"><span class="step">2</span> Hasil</h2>
     <div id="result-empty" class="empty"><p>Hasil pemrosesan akan tampil di sini.</p></div>
     <div id="result" hidden>
+      <img id="result-image" alt="Gambar yang dihasilkan" width="1024" height="1024" hidden>
       <table id="kv" class="kv"></table>
       <details class="raw" open><summary>JSON mentah</summary><pre id="raw"></pre></details>
       <div class="actions">
         <button type="button" class="btn ghost small" id="copy">Salin JSON</button>
-        <button type="button" class="btn ghost small" id="download">Unduh JSON</button>
+        <button type="button" class="btn ghost small" id="download">{% if t.playground_kind == 'generate' %}Unduh gambar{% else %}Unduh JSON{% endif %}</button>
       </div>
       <p class="muted-text">Hasil dibuat oleh mesin dan dapat mengandung kesalahan.</p>
     </div>

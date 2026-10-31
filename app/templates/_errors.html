@@ -9,6 +9,7 @@
     <thead><tr><th>Code</th><th>HTTP</th><th>Meaning / what to do</th></tr></thead>
     <tbody>
       <tr><td><code>INVALID_FILE</code></td><td>400 · 411 · 415</td><td>Unsupported, malformed or empty upload. Select a supported file and retry.</td></tr>
+      <tr><td><code>INVALID_REQUEST</code></td><td>400</td><td>A required field is missing or a number is outside the allowed range.</td></tr>
       <tr><td><code>FILE_TOO_LARGE</code></td><td>413</td><td>Upload exceeds the size or dimension limit. Reduce file size.</td></tr>
       <tr><td><code>UNAUTHORIZED</code></td><td>401</td><td>Missing, expired or invalid identity token. Sign in again.</td></tr>
       <tr><td><code>CONSENT_REQUIRED</code></td><td>403</td><td>Data-handling notice must be acknowledged before using a sensitive-document service.</td></tr>

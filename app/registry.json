@@ -42,5 +42,23 @@
   {"slug": "text-matching", "name": "Text Matching", "category": "AI Services", "status": "coming_soon", "access_mode": "none", "playground_enabled": false, "icon": "🔍",
    "description": "Membandingkan harga dan klausul antar dokumen invoice dan PKS.", "capabilities": [], "limitations": []},
   {"slug": "llm", "name": "LLM", "category": "AI Services", "status": "coming_soon", "access_mode": "none", "playground_enabled": false, "icon": "💬",
-   "description": "Layanan model bahasa untuk kebutuhan LUTUNG AI.", "capabilities": [], "limitations": []}
+   "description": "Layanan model bahasa untuk kebutuhan LUTUNG AI.", "capabilities": [], "limitations": []},
+  {
+    "slug": "qwen-image",
+    "name": "Qwen Image",
+    "category": "AI Services",
+    "status": "beta",
+    "access_mode": "trial",
+    "playground_enabled": true,
+    "playground_kind": "generate",
+    "sensitive": false,
+    "adapter": "qwen_image",
+    "icon": "🖼️",
+    "description": "Membuat atau mengubah gambar dari deskripsi teks.",
+    "capabilities": ["Buat gambar dari deskripsi", "Ubah gambar yang sudah ada", "Hasil dengan latar transparan"],
+    "input": "Deskripsi teks. Mode ubah dan latar transparan juga membutuhkan gambar JPEG atau PNG.",
+    "output": "Gambar hasil generasi",
+    "limitations": ["Satu kali uji coba gratis yang berhasil per akun", "Lebar dan tinggi 256 sampai 1536 piksel, kelipatan 32", "Hasil dibuat oleh mesin dan dapat mengandung kesalahan", "Akses berbayar belum tersedia"],
+    "limits": {"max_bytes": 5242880, "formats": ["JPEG", "PNG"], "max_pixels": 25000000, "timeout_s": 180, "rate_per_min": 2, "concurrency": 1, "prompt_max": 2000, "size_min": 256, "size_max": 1536, "size_step": 32, "steps_min": 4, "steps_max": 40, "steps_default": 40, "default_size": 1024}
+  }
 ]

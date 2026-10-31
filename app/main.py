@@ -1,5 +1,6 @@
 """LUTUNG AI portal: public pages + backend/BFF for playgrounds, trials and API docs."""
 import asyncio
+import base64
 import io
 import json
 import logging
@@ -187,6 +188,77 @@ async def feedback(request: Request):
     return {"ok": True}
 
 
+_GENERATE_MODES = {"create", "edit", "transparent"}
+
+
+def _bounded_int(raw, low, high, step=1):
+    text = str(raw if raw is not None else "").strip()
+    if not text.isdigit():
+        return None
+    value = int(text)
+    if value < low or value > high or (step > 1 and value % step):
+        return None
+    return value
+
+
+def _form_text(form, name):
+    value = form.get(name)
+    return value.strip() if isinstance(value, str) else ""
+
+
+async def _read_upload(form):
+    upload = form.get("file")
+    if not hasattr(upload, "read"):
+        return b""
+    data = await upload.read()
+    if hasattr(upload, "close"):
+        await upload.close()
+    return data
+
+
+async def read_generate(form, limits):
+    """Return (provider fields, log metadata, error) for a Qwen Image request."""
+    mode = _form_text(form, "mode")
+    if mode not in _GENERATE_MODES:
+        return None, None, ("INVALID_REQUEST", "Pilih mode: buat, ubah, atau transparan.", 400)
+    prompt = _form_text(form, "prompt")
+    if not prompt:
+        return None, None, ("INVALID_REQUEST", "Isi deskripsi gambar.", 400)
+    if len(prompt) > limits["prompt_max"]:
+        return None, None, ("INVALID_REQUEST", f"Deskripsi maksimal {limits['prompt_max']} karakter.", 400)
+    negative = _form_text(form, "negative_prompt")
+    if len(negative) > limits["prompt_max"]:
+        return None, None, ("INVALID_REQUEST", f"Negative prompt maksimal {limits['prompt_max']} karakter.", 400)
+    width = _bounded_int(form.get("width"), limits["size_min"], limits["size_max"], limits["size_step"])
+    height = _bounded_int(form.get("height"), limits["size_min"], limits["size_max"], limits["size_step"])
+    if width is None or height is None:
+        return None, None, ("INVALID_REQUEST",
+                            f"Lebar dan tinggi harus kelipatan {limits['size_step']}, dari {limits['size_min']} sampai {limits['size_max']}.", 400)
+    steps = _bounded_int(form.get("steps"), limits["steps_min"], limits["steps_max"])
+    if steps is None:
+        return None, None, ("INVALID_REQUEST", f"Steps harus {limits['steps_min']} sampai {limits['steps_max']}.", 400)
+    seed_text = _form_text(form, "seed")
+    seed = None
+    if seed_text:
+        if not seed_text.isdigit() or int(seed_text) > 2147483647:
+            return None, None, ("INVALID_REQUEST", "Seed harus bilangan bulat dari 0, atau dikosongkan.", 400)
+        seed = int(seed_text)
+    image = await _read_upload(form) if mode != "create" else b""
+    if mode != "create":
+        meta_image, problem = validate_image(image, limits)
+        if problem:
+            return None, None, problem
+    else:
+        meta_image = {}
+    fields = {"mode": mode, "prompt": prompt, "width": width, "height": height, "steps": steps, "seed": seed}
+    if negative:
+        fields["negative_prompt"] = negative
+    if image:
+        fields["image"] = base64.b64encode(image).decode()
+    meta = {"mode": mode, "width": width, "height": height, "steps": steps, "bytes": meta_image.get("bytes", 0)}
+    return fields, meta, None
+
+
 @app.post("/api/v1/playground/{slug}")
 async def playground_run(slug: str, request: Request):
     rid, started = request.state.rid, time.time()
@@ -200,6 +272,7 @@ async def playground_run(slug: str, request: Request):
     except auth.AuthError:
         return err(rid, "UNAUTHORIZED", "Sign in again.", 401)
     limits = t["limits"]
+    kind = t.get("playground_kind") or "image"
 
     ip = request.client.host if request.client else "?"
     wait = rate_limited(f"u:{user['id']}:{slug}", limits["rate_per_min"]) or \
@@ -215,12 +288,13 @@ async def playground_run(slug: str, request: Request):
         return err(rid, "FILE_TOO_LARGE", f"File exceeds {limits['max_bytes'] // 1048576} MB.", 413)
     if not request.headers.get("content-type", "").startswith("multipart/form-data"):
         return err(rid, "INVALID_FILE", "Use multipart/form-data with a 'file' field.", 415)
-    form = await request.form(max_files=1, max_fields=2)
-    upload = form.get("file")
-    data = await upload.read() if hasattr(upload, "read") else b""
-    if hasattr(upload, "close"):
-        await upload.close()  # deletes any spooled temp file
-    meta, problem = validate_image(data, limits)
+    form = await request.form(max_files=1, max_fields=12 if kind == "generate" else 2)
+    if kind == "generate":
+        fields, meta, problem = await read_generate(form, limits)
+        data = fields
+    else:
+        data = await _read_upload(form)
+        meta, problem = validate_image(data, limits)
     if problem:
         db.record_execution(rid, user["id"], slug, "rejected", started, problem[0])
         return err(rid, *problem)
@@ -246,7 +320,15 @@ async def playground_run(slug: str, request: Request):
     meta_json = json.dumps(meta)
     async with sem:
         try:
-            output = await providers.run(t["adapter"], data, limits["timeout_s"])
+            if kind == "generate":
+                output = await providers.run_generate(t["adapter"], data, limits["timeout_s"])
+                output.setdefault("mode", data["mode"])
+                output.setdefault("width", data["width"])
+                output.setdefault("height", data["height"])
+                if data.get("seed") is not None:
+                    output.setdefault("seed", data["seed"])
+            else:
+                output = await providers.run(t["adapter"], data, limits["timeout_s"])
         except providers.ProviderError as e:
             if trial:
                 db.settle_trial(user["id"], slug, rid, False, e.code)

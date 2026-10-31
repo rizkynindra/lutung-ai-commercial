@@ -15,6 +15,7 @@
     RATE_LIMITED: "Terlalu banyak permintaan. Coba lagi beberapa saat lagi.",
     SERVICE_UNAVAILABLE: "Layanan sedang tidak tersedia atau sibuk. Coba lagi nanti; jangan kirim berulang kali.",
     PROCESSING_TIMEOUT: "Pemrosesan melebihi batas waktu. Uji coba Anda tidak terpakai; silakan coba lagi.",
+    INVALID_REQUEST: "Permintaan tidak valid. Periksa isian lalu coba lagi.",
     INTERNAL_ERROR: "Terjadi kesalahan pada server.",
   };
   const POST_TRIAL = MSG.TRIAL_ALREADY_USED;
@@ -171,8 +172,10 @@
 
   function errorText(r) {
     const code = (r.body.error && r.body.error.code) || "INTERNAL_ERROR";
+    const server = r.body.error && r.body.error.message;
     const rid = r.body.request_id ? ` (ID permintaan: ${r.body.request_id})` : "";
-    return (MSG[code] || MSG.INTERNAL_ERROR) + rid;
+    const text = (code === "INVALID_REQUEST" && server) ? server : (MSG[code] || MSG.INTERNAL_ERROR);
+    return text + rid;
   }
 
   // Card CTA labels depend on sign-in and trial state.
@@ -207,11 +210,18 @@
     apply();
   }
 
+  function safeImage(src) {
+    return typeof src === "string" && (src.startsWith("data:image/") || src.startsWith("https://"));
+  }
+
   function initPlayground() {
     const pg = $("pg"), slug = pg.dataset.slug, trial = pg.dataset.access === "trial";
+    const generate = pg.dataset.kind === "generate";
     const sensitive = pg.dataset.sensitive === "true", maxBytes = +pg.dataset.max;
-    const form = $("pg-form"), status = $("status"), file = $("file"), preview = $("preview");
-    let lastRid = null, lastJson = "", admin = false;
+    const form = $("pg-form"), status = $("status"), file = $(generate ? "source-file" : "file");
+    const preview = $(generate ? "source-preview" : "preview");
+    let lastRid = null, lastJson = "", lastImage = "", admin = false;
+    const submitLabel = { create: "Buat gambar", edit: "Ubah gambar", transparent: "Buat latar transparan" };
 
     function show(id, on) { const x = $(id); if (x) x.hidden = !on; }
     function postTrial() { $("trial-state").textContent = POST_TRIAL; show("trial-state", true); show("pg-form", false); }
@@ -251,27 +261,71 @@
       });
     }
 
-    file.addEventListener("change", () => {
+    function currentMode() {
+      const picked = form.querySelector('input[name="mode"]:checked');
+      return picked ? picked.value : "create";
+    }
+    function sendMode() {
+      const mode = currentMode();
+      const transparent = $("as-transparent");
+      return mode === "edit" && transparent && transparent.checked ? "transparent" : mode;
+    }
+    function syncMode() {
+      if (!generate) return;
+      const mode = currentMode();
+      const editing = mode === "edit";
+      show("source-field", editing);
+      file.required = editing;
+      const hint = $("prompt-hint");
+      if (hint) {
+        hint.textContent = editing
+          ? "Tulis prompt Anda untuk mengubah gambar yang diunggah."
+          : "Tulis prompt Anda. Gambar baru dibuat dari teks ini.";
+      }
+      const outgoing = sendMode();
+      $("submit").textContent = outgoing === "transparent" ? "Buat latar transparan" : (submitLabel[mode] || "Buat gambar");
+    }
+    if (generate) {
+      form.querySelectorAll('input[name="mode"]').forEach((el) => el.addEventListener("change", syncMode));
+      const transparent = $("as-transparent");
+      if (transparent) transparent.addEventListener("change", syncMode);
+      syncMode();
+    }
+
+    if (file) file.addEventListener("change", () => {
       const f = file.files[0];
-      preview.hidden = true;
+      if (preview) preview.hidden = true;
       status.textContent = "";
       if (!f) return;
       if (!["image/jpeg", "image/png"].includes(f.type)) { status.textContent = MSG.INVALID_FILE; file.value = ""; return; }
       if (f.size > maxBytes) { status.textContent = MSG.FILE_TOO_LARGE; file.value = ""; return; }
-      preview.src = URL.createObjectURL(f);
-      preview.hidden = false;
+      if (preview) {
+        preview.src = URL.createObjectURL(f);
+        preview.hidden = false;
+      }
       status.textContent = `File dipilih: ${f.name}`;
     });
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      if (!file.files[0]) return;
+      const mode = generate ? sendMode() : "";
+      if (generate && mode !== "create" && !file.files[0]) {
+        status.textContent = "Unggah gambar yang ingin diubah, lalu tulis prompt-nya.";
+        return;
+      }
+      if (!generate && !file.files[0]) return;
       const btn = $("submit");
       btn.disabled = true;
       show("result", false);
-      status.textContent = "Mengunggah dan memproses… Permintaan pertama bisa lebih lama saat layanan sedang dinyalakan.";
-      const fd = new FormData();
-      fd.append("file", file.files[0]);
+      status.textContent = generate
+        ? "Menggambar… Ini bisa berjalan beberapa menit."
+        : "Mengunggah dan memproses… Permintaan pertama bisa lebih lama saat layanan sedang dinyalakan.";
+      const fd = generate ? new FormData(form) : new FormData();
+      if (generate) {
+        fd.set("mode", mode);
+        if (mode === "create") fd.delete("file");
+      }
+      if (!generate) fd.append("file", file.files[0]);
       const r = await api(`/api/v1/playground/${slug}`, { method: "POST", body: fd });
       btn.disabled = false;
       lastRid = r.body.request_id || null;
@@ -281,23 +335,43 @@
         if (r.status === 401) show("need-login", true);
         return;
       }
-      status.textContent = "Selesai.";
-      renderResult(r.body.data || {});
+      const data = r.body.data || {};
+      status.textContent = generate && !safeImage(data.image)
+        ? "Selesai. Respons tidak berisi gambar yang dapat ditampilkan."
+        : "Selesai.";
+      renderResult(data);
       if (trial && !admin) postTrial();
     });
 
     function renderResult(data) {
+      const img = $("result-image");
+      lastImage = "";
+      if (img) {
+        if (safeImage(data.image)) {
+          img.src = data.image;
+          if (data.width) img.width = data.width;
+          if (data.height) img.height = data.height;
+          img.classList.toggle("transparent-bg", data.mode === "transparent");
+          img.hidden = false;
+          lastImage = data.image;
+        } else {
+          img.removeAttribute("src");
+          img.hidden = true;
+        }
+      }
+      const shown = {};
       const kv = $("kv");
       kv.replaceChildren();
       Object.entries(data).forEach(([k, v]) => {
-        if (k.startsWith("_")) return;
+        if (k === "image" || k.startsWith("_")) return;
+        shown[k] = v;
         const tr = kv.insertRow(), th = document.createElement("th");
         th.textContent = k;
         tr.append(th);
         tr.insertCell().textContent = typeof v === "object" ? JSON.stringify(v) : String(v);
       });
       if (!kv.rows.length) kv.insertRow().insertCell().textContent = "Tidak ada field yang dapat ditampilkan; lihat JSON mentah.";
-      lastJson = JSON.stringify(data, null, 2);
+      lastJson = JSON.stringify(shown, null, 2);
       $("raw").textContent = lastJson;  // textContent: model output is never rendered as HTML
       show("result", true);
       show("result-empty", false);
@@ -308,11 +382,18 @@
       catch (e) { status.textContent = "Gagal menyalin JSON."; }
     });
     $("download").addEventListener("click", () => {
+      if (generate && !lastImage) { status.textContent = "Tidak ada gambar untuk diunduh."; return; }
       const a = document.createElement("a");
-      a.href = URL.createObjectURL(new Blob([lastJson], { type: "application/json" }));
-      a.download = `${slug}-${lastRid || "result"}.json`;
+      if (generate) {
+        const ext = lastImage.startsWith("data:image/jpeg") ? "jpg" : lastImage.startsWith("data:image/webp") ? "webp" : "png";
+        a.href = lastImage;
+        a.download = `${slug}-${lastRid || "result"}.${ext}`;
+      } else {
+        a.href = URL.createObjectURL(new Blob([lastJson], { type: "application/json" }));
+        a.download = `${slug}-${lastRid || "result"}.json`;
+      }
       a.click();
-      URL.revokeObjectURL(a.href);
+      if (a.href.startsWith("blob:")) URL.revokeObjectURL(a.href);
     });
     $("fb-send").addEventListener("click", async () => {
       const message = $("fb-msg").value.trim();
