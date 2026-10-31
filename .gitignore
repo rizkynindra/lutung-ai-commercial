@@ -13,3 +13,4 @@ TUTORIAL.md
 .agents/
 skills-lock.json
 app/firebase_web.json
+deploy/lutung.env
