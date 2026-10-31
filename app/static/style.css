@@ -201,6 +201,7 @@ code { font-family: ui-monospace, Consolas, monospace; font-size: 0.92em; }
 #submit { align-self: stretch; }
 .pg-status { margin: 12px 0 0 !important; font-size: 0.9rem; color: var(--muted); }
 .pg-status:empty { display: none; }
+.elapsed { margin: 4px 0 0 !important; font-size: 0.95rem; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
 .pg-output .kv { margin-bottom: 12px; font-size: 0.95rem; }
 .pg-output .kv th { width: 35%; color: var(--muted); font-weight: 500; background: #f8fafc; }
 .raw summary { cursor: pointer; font-weight: 600; font-size: 0.9rem; margin-bottom: 8px; }

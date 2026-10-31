@@ -220,10 +220,30 @@
     const sensitive = pg.dataset.sensitive === "true", maxBytes = +pg.dataset.max;
     const form = $("pg-form"), status = $("status"), file = $(generate ? "source-file" : "file");
     const preview = $(generate ? "source-preview" : "preview");
-    let lastRid = null, lastJson = "", lastImage = "", admin = false;
+    let lastRid = null, lastJson = "", lastImage = "", admin = false, ticker = null;
     const submitLabel = { create: "Buat gambar", edit: "Ubah gambar", transparent: "Buat latar transparan" };
 
     function show(id, on) { const x = $(id); if (x) x.hidden = !on; }
+    function clockText(ms) {
+      const total = Math.max(0, Math.floor(ms / 1000));
+      return Math.floor(total / 60) + ":" + String(total % 60).padStart(2, "0");
+    }
+    function startClock() {
+      stopClock();
+      const begun = Date.now();
+      const line = $("elapsed"), value = $("elapsed-value");
+      if (!line || !value) return begun;
+      value.textContent = "0:00";
+      line.hidden = false;
+      ticker = setInterval(() => { value.textContent = clockText(Date.now() - begun); }, 1000);
+      return begun;
+    }
+    function stopClock() {
+      if (ticker) clearInterval(ticker);
+      ticker = null;
+      const line = $("elapsed");
+      if (line) line.hidden = true;
+    }
     function postTrial() { $("trial-state").textContent = POST_TRIAL; show("trial-state", true); show("pg-form", false); }
 
     onAuth(async (u) => {
@@ -325,27 +345,34 @@
       btn.disabled = true;
       show("result", false);
       status.textContent = generate
-        ? "Menggambar… Ini bisa berjalan beberapa menit."
-        : "Mengunggah dan memproses… Permintaan pertama bisa lebih lama saat layanan sedang dinyalakan.";
+        ? "Menggambar… Permintaan sedang diproses."
+        : "Mengunggah dan memproses… Permintaan sedang diproses.";
+      const begun = startClock();
       const fd = generate ? new FormData(form) : new FormData();
       if (generate) {
         fd.set("mode", mode);
         if (mode === "create") fd.delete("file");
       }
       if (!generate) fd.append("file", file.files[0]);
-      const r = await api(`/api/v1/playground/${slug}`, { method: "POST", body: fd });
-      btn.disabled = false;
+      let r;
+      try {
+        r = await api(`/api/v1/playground/${slug}`, { method: "POST", body: fd });
+      } finally {
+        stopClock();
+        btn.disabled = false;
+      }
+      const took = " Waktu proses " + clockText(Date.now() - begun) + ".";
       lastRid = r.body.request_id || null;
       if (!r.ok) {
-        status.textContent = errorText(r);
+        status.textContent = errorText(r) + took;
         if (!admin && r.body.error && r.body.error.code === "TRIAL_ALREADY_USED") postTrial();
         if (r.status === 401) show("need-login", true);
         return;
       }
       const data = r.body.data || {};
-      status.textContent = generate && !safeImage(data.image)
+      status.textContent = (generate && !safeImage(data.image)
         ? "Selesai. Respons tidak berisi gambar yang dapat ditampilkan."
-        : "Selesai.";
+        : "Selesai.") + took;
       renderResult(data);
       if (trial && !admin) postTrial();
     });
