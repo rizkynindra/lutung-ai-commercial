@@ -383,8 +383,8 @@
       if (img) {
         if (safeImage(data.image)) {
           img.src = data.image;
-          if (data.width) img.width = data.width;
-          if (data.height) img.height = data.height;
+          img.removeAttribute("width");
+          img.removeAttribute("height");
           img.classList.toggle("transparent-bg", data.mode === "transparent");
           img.hidden = false;
           lastImage = data.image;

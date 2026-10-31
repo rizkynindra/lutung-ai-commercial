@@ -58,7 +58,7 @@
           <span>{{ t.limits.formats | join(' / ') }} · maks. {{ t.limits.max_bytes // 1048576 }} MB</span>
         </label>
         <input type="file" id="source-file" name="file" accept="image/jpeg,image/png">
-        <img id="source-preview" alt="Pratinjau gambar yang akan diubah" width="640" height="360" hidden>
+        <img id="source-preview" alt="Pratinjau gambar yang akan diubah" hidden>
         <label class="check" id="transparent-field" for="as-transparent">
           <input type="checkbox" id="as-transparent"> Hasil dengan latar transparan
         </label>
@@ -123,7 +123,7 @@
     <h2 id="result-h"><span class="step">2</span> Hasil</h2>
     <div id="result-empty" class="empty"><p>Hasil pemrosesan akan tampil di sini.</p></div>
     <div id="result" hidden>
-      <img id="result-image" alt="Gambar yang dihasilkan" width="1024" height="1024" hidden>
+      <img id="result-image" alt="Gambar yang dihasilkan" hidden>
       <table id="kv" class="kv"></table>
       <details class="raw" open><summary>JSON mentah</summary><pre id="raw"></pre></details>
       <div class="actions">
