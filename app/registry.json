@@ -44,7 +44,7 @@
   {"slug": "llm", "name": "LLM", "category": "AI Services", "status": "coming_soon", "access_mode": "none", "playground_enabled": false, "icon": "💬",
    "description": "Layanan model bahasa untuk kebutuhan LUTUNG AI.", "capabilities": [], "limitations": []},
   {
-    "slug": "qwen-image Uncensored",
+    "slug": "qwen-image-Uncensored",
     "name": "Qwen Image Uncensored",
     "category": "AI Services",
     "status": "available",
