@@ -289,6 +289,13 @@
       form.querySelectorAll('input[name="mode"]').forEach((el) => el.addEventListener("change", syncMode));
       const transparent = $("as-transparent");
       if (transparent) transparent.addEventListener("change", syncMode);
+      const useExample = $("use-example");
+      if (useExample) useExample.addEventListener("click", () => {
+        const sample = $("example-prompt");
+        $("prompt").value = sample.textContent.trim();
+        $("prompt").focus();
+        status.textContent = "Contoh prompt dimasukkan. Anda bisa mengubahnya sebelum memproses.";
+      });
       syncMode();
     }
 

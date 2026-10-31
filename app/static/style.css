@@ -168,6 +168,9 @@ code { font-family: ui-monospace, Consolas, monospace; font-size: 0.92em; }
 .pg-fields .mode-option:has(input:checked) { border-color: var(--brand); background: #e8f0fa; color: var(--brand); }
 .pg-fields .mode-option input { width: auto; min-height: 0; accent-color: var(--brand); cursor: pointer; }
 .prompt-label textarea { min-height: 140px; font-size: 1rem; line-height: 1.5; }
+.example-prompt { border: 1px solid var(--line); border-radius: 8px; background: #f6f9fc; padding: 12px 14px; }
+.example-label { margin: 0; font-size: 0.8rem; font-weight: 600; color: var(--muted); }
+.example-prompt p#example-prompt { margin: 6px 0 10px; color: var(--text); font-size: 0.92rem; font-weight: 400; line-height: 1.5; }
 #source-field .check { flex-direction: row; align-items: center; margin: 8px 0 0; min-height: 44px; font-weight: 600; color: var(--text); cursor: pointer; }
 #source-field .check input { width: 1.1rem; height: 1.1rem; min-height: 0; cursor: pointer; }
 .advanced { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; background: #fff; }
