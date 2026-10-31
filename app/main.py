@@ -334,7 +334,7 @@ async def playground_run(slug: str, request: Request):
                 db.settle_trial(user["id"], slug, rid, False, e.code)
             db.record_execution(rid, user["id"], slug, "failed", started, e.code, meta_json)
             log(event="playground", request_id=rid, technology=slug, outcome="failed", error=e.code,
-                admin=user["admin"])
+                provider_status=e.detail, admin=user["admin"])
             msg = "Processing timed out." if e.code == "PROCESSING_TIMEOUT" else "Service unavailable. Retry later."
             return err(rid, e.code, msg, 504 if e.code == "PROCESSING_TIMEOUT" else 503)
         except BaseException:

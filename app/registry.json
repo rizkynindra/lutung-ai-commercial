@@ -59,6 +59,6 @@
     "input": "Deskripsi teks. Mode ubah dan latar transparan juga membutuhkan gambar JPEG atau PNG.",
     "output": "Gambar hasil generasi",
     "limitations": ["Satu kali uji coba gratis yang berhasil per akun", "Lebar dan tinggi 256 sampai 1536 piksel, kelipatan 32", "Hasil dibuat oleh mesin dan dapat mengandung kesalahan", "Akses berbayar belum tersedia"],
-    "limits": {"max_bytes": 5242880, "formats": ["JPEG", "PNG"], "max_pixels": 25000000, "timeout_s": 180, "rate_per_min": 2, "concurrency": 1, "prompt_max": 2000, "size_min": 256, "size_max": 1536, "size_step": 32, "steps_min": 4, "steps_max": 40, "steps_default": 40, "default_size": 1024}
+    "limits": {"max_bytes": 5242880, "formats": ["JPEG", "PNG"], "max_pixels": 25000000, "timeout_s": 300, "rate_per_min": 2, "concurrency": 1, "prompt_max": 2000, "size_min": 256, "size_max": 1536, "size_step": 32, "steps_min": 4, "steps_max": 40, "steps_default": 40, "default_size": 1024}
   }
 ]

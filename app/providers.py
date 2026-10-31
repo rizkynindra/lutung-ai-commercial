@@ -9,16 +9,19 @@ Qwen Image POSTs {"input": {mode, prompt, width, height, steps, seed}}.
 Edit and transparent modes also send input.image as raw base64.
 RunPod runsync answers {"status": "COMPLETED", "output": ...}.
 """
+import asyncio
 import base64
 import os
+import time
 
 import httpx
 
 
 class ProviderError(Exception):
-    def __init__(self, code):  # SERVICE_UNAVAILABLE | PROCESSING_TIMEOUT
+    def __init__(self, code, detail=None):  # SERVICE_UNAVAILABLE | PROCESSING_TIMEOUT
         super().__init__(code)
         self.code = code
+        self.detail = detail  # short provider status, never image bytes
 
 
 MOCK_OUTPUT = {
@@ -100,6 +103,27 @@ def present(output):
     return data
 
 
+def _status_url(run_url, job_id):
+    """Map a RunPod /runsync URL to /status/{job_id}. Other hosts cannot be polled."""
+    base = run_url.split("?", 1)[0].rstrip("/")
+    for suffix in ("/runsync", "/run"):
+        if base.endswith(suffix):
+            return base[:-len(suffix)] + "/status/" + job_id
+    return None
+
+
+def _read_json(response):
+    if response.status_code != 200:
+        raise ProviderError("SERVICE_UNAVAILABLE")
+    try:
+        body = response.json()
+    except ValueError:
+        raise ProviderError("SERVICE_UNAVAILABLE")
+    if not isinstance(body, dict):
+        raise ProviderError("SERVICE_UNAVAILABLE")
+    return body
+
+
 async def _call(adapter_key, payload, timeout_s):
     env = f"LUTUNG_PROVIDER_{adapter_key.upper()}"
     url, token = os.getenv(f"{env}_URL"), os.getenv(f"{env}_TOKEN", "")
@@ -107,26 +131,30 @@ async def _call(adapter_key, payload, timeout_s):
         return MOCK_OUTPUT.get(adapter_key, {"_mock": True})
     if not url:
         raise ProviderError("SERVICE_UNAVAILABLE")
-    # No automatic retries: inference is non-idempotent and may cost money.
+    headers = {"Authorization": f"Bearer {token}"}
+    deadline = time.monotonic() + timeout_s
+    # One submission only. Polling /status waits for that same job; it does not run it again.
     try:
-        async with httpx.AsyncClient(timeout=timeout_s) as client:
-            r = await client.post(url, json={"input": payload}, headers={"Authorization": f"Bearer {token}"})
+        async with httpx.AsyncClient(timeout=httpx.Timeout(timeout_s, connect=10.0)) as client:
+            body = _read_json(await client.post(url, json={"input": payload}, headers=headers))
+            while body.get("status") in ("IN_QUEUE", "IN_PROGRESS"):
+                remaining = deadline - time.monotonic()
+                job_id = body.get("id")
+                status_url = _status_url(url, job_id) if job_id else None
+                if remaining <= 0 or not status_url:
+                    raise ProviderError("PROCESSING_TIMEOUT", body.get("status"))
+                await asyncio.sleep(min(2.0, remaining))
+                body = _read_json(await client.get(status_url, headers=headers))
     except httpx.TimeoutException:
-        raise ProviderError("PROCESSING_TIMEOUT")
+        raise ProviderError("PROCESSING_TIMEOUT", "http_timeout")
     except httpx.HTTPError:
         raise ProviderError("SERVICE_UNAVAILABLE")
-    if r.status_code != 200:
-        raise ProviderError("SERVICE_UNAVAILABLE")
-    try:
-        body = r.json()
-    except ValueError:
-        raise ProviderError("SERVICE_UNAVAILABLE")
-    status = body.get("status") if isinstance(body, dict) else None
-    if status in ("IN_QUEUE", "IN_PROGRESS"):
-        raise ProviderError("PROCESSING_TIMEOUT")
+    status = body.get("status")
+    if status == "TIMED_OUT":
+        raise ProviderError("PROCESSING_TIMEOUT", status)
     output = body.get("output") if status == "COMPLETED" else None
     if output is None or (isinstance(output, dict) and output.get("error")):
-        raise ProviderError("SERVICE_UNAVAILABLE")
+        raise ProviderError("SERVICE_UNAVAILABLE", status)
     return output
 
 
