@@ -12,7 +12,7 @@ from collections import defaultdict, deque
 from pathlib import Path
 
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from PIL import Image
@@ -347,6 +347,11 @@ async def playground_run(slug: str, request: Request):
     log(event="playground", request_id=rid, technology=slug, outcome="success", admin=user["admin"],
         latency_ms=int((time.time() - started) * 1000))
     return {"request_id": rid, "status": "success", "technology": slug, "data": output}
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon_ico():
+    return FileResponse(BASE / "static" / "favicon.ico", media_type="image/x-icon")
 
 
 # ---------- pages ----------
