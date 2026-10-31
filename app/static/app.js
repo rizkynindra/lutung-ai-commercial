@@ -21,13 +21,6 @@
   const POST_TRIAL = MSG.TRIAL_ALREADY_USED;
 
   const AUTH_ERR = {
-    "auth/invalid-email": "Email tidak valid.",
-    "auth/missing-password": "Isi kata sandi.",
-    "auth/weak-password": "Kata sandi minimal 6 karakter.",
-    "auth/email-already-in-use": "Email ini sudah terdaftar. Silakan masuk.",
-    "auth/invalid-credential": "Email atau kata sandi salah.",
-    "auth/user-not-found": "Email atau kata sandi salah.",
-    "auth/wrong-password": "Email atau kata sandi salah.",
     "auth/too-many-requests": "Terlalu banyak percobaan. Coba lagi nanti.",
     "auth/unauthorized-domain": "Domain ini belum diizinkan untuk masuk dengan Google.",
     "auth/operation-not-allowed": "Metode masuk ini belum diaktifkan.",
@@ -76,32 +69,12 @@
     }
   }
 
-  async function emailAuth(create) {
-    const form = $("auth-form");
-    if (!form.reportValidity()) return;
-    form.password.autocomplete = create ? "new-password" : "current-password";
-    showAuthError({ code: "" });
-    try {
-      const email = form.email.value.trim();
-      const password = form.password.value;
-      if (create) await fb.createUserWithEmailAndPassword(email, password);
-      else await fb.signInWithEmailAndPassword(email, password);
-      form.reset();
-      $("auth-dialog").close();
-    } catch (e) {
-      showAuthError(e);
-    }
-  }
-
   function bindAuthDialog() {
     const dialog = $("auth-dialog");
-    const form = $("auth-form");
-    if (!dialog || !form) return;
+    if (!dialog || !$("auth-google")) return;
     dialog.addEventListener("click", (e) => { if (e.target === dialog) dialog.close(); });
     $("auth-close").addEventListener("click", () => dialog.close());
     $("auth-google").addEventListener("click", googleSignIn);
-    $("auth-signup").addEventListener("click", () => emailAuth(true));
-    form.addEventListener("submit", (e) => { e.preventDefault(); emailAuth(false); });
   }
 
   function signIn() {

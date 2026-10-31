@@ -1,7 +1,7 @@
 {
   "auth": {
     "providers": {
-      "emailPassword": true,
+      "emailPassword": false,
       "googleSignIn": {
         "oAuthBrandDisplayName": "LUTUNG AI",
         "supportEmail": "rizkynindra@gmail.com",
