@@ -9,6 +9,7 @@ import time
 import uuid
 
 DB_PATH = os.getenv("LUTUNG_DB_PATH", "lutung.db")
+FEEDBACK_LIST_LIMIT = 200
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS users (
@@ -124,3 +125,15 @@ def add_feedback(user_id, tech, request_id, message):
     with connect() as c:
         c.execute("INSERT INTO feedback (id, user_id, technology_id, request_id, message, created_at) VALUES (?,?,?,?,?,?)",
                   (_id(), user_id, tech, request_id, message, time.time()))
+
+
+def list_feedback(limit=FEEDBACK_LIST_LIMIT):
+    """Newest reports first, with the sender's account. One extra row detects a longer list."""
+    with connect() as c:
+        rows = c.execute(
+            "SELECT f.technology_id, f.request_id, f.message, f.created_at, u.email, u.display_name "
+            "FROM feedback f LEFT JOIN users u ON u.id = f.user_id "
+            "ORDER BY f.created_at DESC LIMIT ?",
+            (limit + 1,),
+        ).fetchall()
+    return [dict(row) for row in rows[:limit]], len(rows) > limit

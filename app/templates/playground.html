@@ -141,6 +141,14 @@
     <textarea id="fb-msg" rows="3" maxlength="2000"></textarea>
     <button type="button" class="btn ghost" id="fb-send">Kirim laporan</button>
   </details>
+
+  <dialog id="notice-dialog" class="notice-dialog" aria-labelledby="notice-title">
+    <div class="notice-body">
+      <h2 id="notice-title"></h2>
+      <p id="notice-body"></p>
+      <button type="button" class="btn" id="notice-close">Tutup</button>
+    </div>
+  </dialog>
 </div>
 {% endblock %}
 {% block scripts %}<script>LUTUNG.initPlayground()</script>{% endblock %}

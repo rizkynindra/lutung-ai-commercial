@@ -402,13 +402,31 @@
       a.click();
       if (a.href.startsWith("blob:")) URL.revokeObjectURL(a.href);
     });
+    const notice = $("notice-dialog");
+    function showNotice(title, body) {
+      $("notice-title").textContent = title;
+      $("notice-body").textContent = body;
+      if (!notice.open) notice.showModal();
+    }
+    notice.addEventListener("click", (e) => { if (e.target === notice) notice.close(); });
+    $("notice-close").addEventListener("click", () => notice.close());
     $("fb-send").addEventListener("click", async () => {
       const message = $("fb-msg").value.trim();
-      if (!message) return;
-      const r = await api("/api/v1/feedback", { method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ technology: slug, request_id: lastRid, message, context: navigator.userAgent }) });
-      status.textContent = r.ok ? "Laporan terkirim. Terima kasih." : errorText(r);
-      if (r.ok) $("fb-msg").value = "";
+      if (!message) {
+        showNotice("Catatan masih kosong", "Tulis apa yang terjadi, lalu kirim lagi.");
+        return;
+      }
+      const send = $("fb-send");
+      send.disabled = true;
+      try {
+        const r = await api("/api/v1/feedback", { method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ technology: slug, request_id: lastRid, message, context: navigator.userAgent }) });
+        if (r.ok) $("fb-msg").value = "";
+        showNotice(r.ok ? "Laporan terkirim" : "Laporan belum terkirim",
+          r.ok ? "Terima kasih. Catatan Anda sudah tersimpan." : errorText(r));
+      } finally {
+        send.disabled = false;
+      }
     });
   }
 
@@ -429,6 +447,7 @@
       $("acct-email").textContent = me.email || "";
       $("acct-provider").textContent = PROVIDER_LABEL[u.provider] || "Masuk";
       $("acct-admin").hidden = !me.admin;
+      $("acct-reports").hidden = !me.admin;
       $("acct-avatar").textContent = name.trim().charAt(0).toUpperCase();
       $("acct-consent").textContent = me.consent ? "Sudah disetujui" : "Belum disetujui";
       document.querySelectorAll("[data-trial-note]").forEach((el) => {
@@ -455,5 +474,57 @@
     });
   }
 
-  window.LUTUNG = { initCatalog, initPlayground, initAccount };
+  function initReports() {
+    onAuth(async (u) => {
+      $("reports-login").hidden = true;
+      $("reports-denied").hidden = true;
+      $("reports-empty").hidden = true;
+      $("reports").hidden = true;
+      if (u === undefined) return;
+      if (!u) { $("reports-status").textContent = ""; $("reports-login").hidden = false; return; }
+      $("reports-status").textContent = "Memuat…";
+      const r = await api("/api/v1/admin/feedback");
+      $("reports-status").textContent = "";
+      if (r.status === 401) { $("reports-login").hidden = false; return; }
+      if (!r.ok) {
+        if (r.body.error && r.body.error.code === "FORBIDDEN") $("reports-denied").hidden = false;
+        else $("reports-status").textContent = errorText(r);
+        return;
+      }
+      const items = r.body.items || [];
+      if (!items.length) { $("reports-empty").hidden = false; return; }
+      const body = $("reports-body");
+      body.replaceChildren();
+      items.forEach((item) => {
+        const tr = body.insertRow();
+        const when = document.createElement("time");
+        const date = new Date(item.created_at * 1000);
+        when.dateTime = date.toISOString();
+        when.textContent = date.toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" });
+        tr.insertCell().append(when);
+        const who = tr.insertCell();
+        who.className = "report-who";
+        const email = item.email || "";
+        const name = item.display_name || "";
+        who.append(email || name || "Pengguna tanpa email");
+        if (name && email && name !== email) {
+          const sub = document.createElement("span");
+          sub.textContent = name;
+          who.append(sub);
+        }
+        tr.insertCell().textContent = item.technology_id || "";
+        tr.insertCell().textContent = item.request_id || "Tidak ada";
+        const note = tr.insertCell();
+        note.className = "report-note";
+        note.textContent = item.message || "";
+      });
+      if (r.body.truncated) {
+        $("reports-note").hidden = false;
+        $("reports-note").textContent = "Hanya " + r.body.limit + " laporan terbaru yang ditampilkan.";
+      }
+      $("reports").hidden = false;
+    });
+  }
+
+  window.LUTUNG = { initCatalog, initPlayground, initAccount, initReports };
 })();

@@ -188,6 +188,19 @@ async def feedback(request: Request):
     return {"ok": True}
 
 
+@app.get("/api/v1/admin/feedback")
+def admin_feedback(request: Request):
+    rid = request.state.rid
+    try:
+        user = current_user(request)
+    except auth.AuthError:
+        return err(rid, "UNAUTHORIZED", "Sign in again.", 401)
+    if not user["admin"]:
+        return err(rid, "FORBIDDEN", "Admin only.", 403)
+    items, truncated = db.list_feedback()
+    return {"items": items, "truncated": truncated, "limit": db.FEEDBACK_LIST_LIMIT}
+
+
 _GENERATE_MODES = {"create", "edit", "transparent"}
 
 
@@ -425,3 +438,8 @@ def privacy(request: Request):
 @app.get("/account")
 def account(request: Request):
     return page(request, "account.html", techs=[t for t in registry() if t.get("playground_enabled")])
+
+
+@app.get("/admin/feedback")
+def admin_feedback_page(request: Request):
+    return page(request, "admin_feedback.html")

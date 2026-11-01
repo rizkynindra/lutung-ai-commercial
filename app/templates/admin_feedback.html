@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Laporan masalah{% endblock %}
+{% block content %}
+<header class="page-head">
+  <p class="eyebrow">Admin</p>
+  <h1>Laporan masalah</h1>
+  <p class="lead">Catatan yang dikirim pengguna dari playground.</p>
+</header>
+
+<p id="reports-status" class="pg-status" role="status" aria-live="polite">Memuat…</p>
+
+<div id="reports-login" class="empty" hidden>
+  <p>Masuk dengan akun admin untuk melihat laporan.</p>
+  <button type="button" class="btn" data-signin>Masuk</button>
+</div>
+
+<div id="reports-denied" class="empty" hidden>
+  <p>Halaman ini hanya untuk admin.</p>
+  <a class="btn ghost" href="/account">Kembali ke akun</a>
+</div>
+
+<div id="reports-empty" class="empty" hidden>
+  <p>Belum ada laporan.</p>
+</div>
+
+<div id="reports" class="panel" hidden>
+  <p id="reports-note" class="muted-text" hidden></p>
+  <div class="table-scroll">
+    <table class="doc-table">
+      <thead>
+        <tr>
+          <th scope="col">Waktu</th>
+          <th scope="col">Pengguna</th>
+          <th scope="col">Layanan</th>
+          <th scope="col">ID permintaan</th>
+          <th scope="col">Catatan</th>
+        </tr>
+      </thead>
+      <tbody id="reports-body"></tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script>LUTUNG.initReports()</script>{% endblock %}

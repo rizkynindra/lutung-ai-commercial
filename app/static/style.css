@@ -29,8 +29,12 @@ a { color: var(--brand); }
 .nav-links a[aria-current="page"] { color: var(--brand); background: #e8f0fa; }
 .auth-area { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 8px 12px 4px; border-top: 1px solid var(--line); }
 .auth-area a { color: var(--muted); text-decoration: none; font-size: 0.9rem; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.auth-dialog { border: 1px solid var(--line); border-radius: 12px; padding: 0; width: min(420px, calc(100vw - 32px)); color: var(--text); }
-.auth-dialog::backdrop { background: rgba(26, 31, 43, 0.45); }
+.auth-dialog, .notice-dialog { border: 1px solid var(--line); border-radius: 12px; padding: 0; width: min(420px, calc(100vw - 32px)); color: var(--text); background: var(--surface); }
+.auth-dialog::backdrop, .notice-dialog::backdrop { background: rgba(26, 31, 43, 0.45); }
+.notice-body { display: flex; flex-direction: column; gap: 12px; padding: 20px 24px 24px; }
+.notice-body h2, .notice-body p { margin: 0; }
+.notice-body h2 { font-size: 1.35rem; }
+.notice-body .btn { min-height: 44px; }
 .auth-form { display: flex; flex-direction: column; gap: 12px; padding: 20px 24px 24px; }
 .auth-form h2 { margin: 0; font-size: 1.35rem; }
 .auth-form .lead-in { margin: 0; color: var(--muted); }
@@ -267,12 +271,19 @@ code { font-family: ui-monospace, Consolas, monospace; font-size: 0.92em; }
 .profile-info strong { font-size: 1.15rem; }
 .profile-info > span:not(.chip) { color: var(--muted); overflow-wrap: anywhere; }
 .profile-info .chip { margin-top: 6px; }
+#acct-reports { margin-top: 10px; min-height: 44px; }
 .access-list { list-style: none; padding: 0 !important; margin: 0 0 12px !important; }
 .access-row { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
 .access-row:first-child { padding-top: 0; }
 .access-info { flex: 1; min-width: 180px; display: flex; flex-direction: column; }
 .access-info span { color: var(--muted); font-size: 0.9rem; }
 .panel .summary { margin-bottom: 12px; }
+.table-scroll { overflow-x: auto; }
+#reports-login .btn, #reports-denied .btn { min-height: 44px; }
+.report-who { display: flex; flex-direction: column; }
+.report-who span { color: var(--muted); font-size: 0.9rem; }
+.report-note { white-space: pre-wrap; min-width: 16rem; max-width: 36rem; }
+#reports-note { margin-bottom: 12px; }
 
 /* about */
 .about { display: flex; flex-direction: column; gap: 28px; max-width: 900px; }
