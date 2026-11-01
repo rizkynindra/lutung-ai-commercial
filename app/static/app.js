@@ -10,7 +10,7 @@
     FILE_TOO_LARGE: "Ukuran file atau dimensi gambar melebihi batas. Perkecil file lalu coba lagi.",
     UNAUTHORIZED: "Sesi Anda berakhir atau tidak valid. Silakan masuk kembali.",
     CONSENT_REQUIRED: "Setujui pemberitahuan penanganan data terlebih dahulu.",
-    TRIAL_ALREADY_USED: "Uji coba gratis OCR KTP Anda sudah digunakan. Akses berbayar belum tersedia. Silakan kembali lagi nanti atau hubungi tim LUTUNG untuk akses pilot.",
+    TRIAL_ALREADY_USED: "Uji coba gratismu sudah digunakan. Kuota kembali 7 hari setelah percobaan yang berhasil.",
     TRIAL_IN_PROGRESS: "Permintaan uji coba Anda masih diproses. Tunggu hingga selesai.",
     RATE_LIMITED: "Terlalu banyak permintaan. Coba lagi beberapa saat lagi.",
     SERVICE_UNAVAILABLE: "Layanan sedang tidak tersedia atau sibuk. Coba lagi nanti; jangan kirim berulang kali.",
@@ -18,8 +18,6 @@
     INVALID_REQUEST: "Permintaan tidak valid. Periksa isian lalu coba lagi.",
     INTERNAL_ERROR: "Terjadi kesalahan pada server.",
   };
-  const POST_TRIAL = MSG.TRIAL_ALREADY_USED;
-
   const AUTH_ERR = {
     "auth/too-many-requests": "Terlalu banyak percobaan. Coba lagi nanti.",
     "auth/unauthorized-domain": "Domain ini belum diizinkan untuk masuk dengan Google.",
@@ -143,11 +141,19 @@
     }
   }
 
+  function trialUsedText(resetsAt) {
+    const days = cfg.trialDays || 7;
+    if (!resetsAt) return `Uji coba gratismu sudah digunakan. Kuota kembali ${days} hari setelah percobaan yang berhasil.`;
+    const when = new Date(resetsAt * 1000).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" });
+    return `Uji coba gratismu sudah digunakan. Tersedia lagi ${when}.`;
+  }
+
   function errorText(r) {
     const code = (r.body.error && r.body.error.code) || "INTERNAL_ERROR";
     const server = r.body.error && r.body.error.message;
     const rid = r.body.request_id ? ` (ID permintaan: ${r.body.request_id})` : "";
-    const text = (code === "INVALID_REQUEST" && server) ? server : (MSG[code] || MSG.INTERNAL_ERROR);
+    const text = code === "TRIAL_ALREADY_USED" ? trialUsedText(r.body.resets_at)
+      : (code === "INVALID_REQUEST" && server) ? server : (MSG[code] || MSG.INTERNAL_ERROR);
     return text + rid;
   }
 
@@ -217,7 +223,11 @@
       const line = $("elapsed");
       if (line) line.hidden = true;
     }
-    function postTrial() { $("trial-state").textContent = POST_TRIAL; show("trial-state", true); show("pg-form", false); }
+    function postTrial(resetsAt) {
+      $("trial-state").textContent = trialUsedText(resetsAt);
+      show("trial-state", true);
+      show("pg-form", false);
+    }
 
     onAuth(async (u) => {
       ["need-login", "trial-state", "consent", "pg-form", "feedback"].forEach((id) => show(id, false));
@@ -231,10 +241,10 @@
       show("feedback", true);
       if (trial && !admin) {
         const s = r.body.trials[slug];
-        if (s === "CONSUMED") return postTrial();
+        if (s === "CONSUMED") return postTrial(r.body.trial_resets_at && r.body.trial_resets_at[slug]);
         $("trial-state").textContent = s === "RESERVED"
           ? "Permintaan uji coba Anda sedang diproses."
-          : "Uji coba gratis tersedia: 1 kali pemrosesan yang berhasil untuk akun Anda.";
+          : `Uji coba gratis tersedia: 1 kali pemrosesan yang berhasil, lalu kembali setelah ${cfg.trialDays} hari.`;
         show("trial-state", true);
       } else if (trial && admin) {
         $("trial-state").textContent = "Akun admin: kuota uji coba tidak berlaku. Batas permintaan per menit tetap berjalan.";
@@ -289,6 +299,15 @@
         $("prompt").focus();
         status.textContent = "Contoh prompt dimasukkan. Anda bisa mengubahnya sebelum memproses.";
       });
+      const aspect = $("aspect");
+      function syncAspect() {
+        if (!aspect) return;
+        const [width, height] = aspect.value.split("x");
+        $("width").value = width;
+        $("height").value = height;
+      }
+      if (aspect) aspect.addEventListener("change", syncAspect);
+      syncAspect();
       syncMode();
     }
 
@@ -321,6 +340,11 @@
         ? "Menggambar… Permintaan sedang diproses."
         : "Mengunggah dan memproses… Permintaan sedang diproses.";
       const begun = startClock();
+      if (generate && $("aspect")) {
+        const [width, height] = $("aspect").value.split("x");
+        $("width").value = width;
+        $("height").value = height;
+      }
       const fd = generate ? new FormData(form) : new FormData();
       if (generate) {
         fd.set("mode", mode);
@@ -338,7 +362,7 @@
       lastRid = r.body.request_id || null;
       if (!r.ok) {
         status.textContent = errorText(r) + took;
-        if (!admin && r.body.error && r.body.error.code === "TRIAL_ALREADY_USED") postTrial();
+        if (!admin && r.body.error && r.body.error.code === "TRIAL_ALREADY_USED") postTrial(r.body.resets_at);
         if (r.status === 401) show("need-login", true);
         return;
       }
@@ -347,7 +371,7 @@
         ? "Selesai. Respons tidak berisi gambar yang dapat ditampilkan."
         : "Selesai.") + took;
       renderResult(data);
-      if (trial && !admin) postTrial();
+      if (trial && !admin) postTrial(Date.now() / 1000 + cfg.trialDays * 86400);
     });
 
     function renderResult(data) {
@@ -453,7 +477,7 @@
       document.querySelectorAll("[data-trial-note]").forEach((el) => {
         el.textContent = me.admin
           ? "Kuota uji coba tidak berlaku untuk akun admin"
-          : "1x uji coba gratis per akun";
+          : `1x uji coba gratis tiap ${cfg.trialDays} hari`;
       });
       document.querySelectorAll("[data-trial]").forEach((el) => {
         if (me.admin) {
@@ -461,7 +485,16 @@
           el.className = "badge s-available";
           return;
         }
-        const [text, cls] = LABEL[me.trials[el.dataset.trial]] || ["—", ""];
+        const state = me.trials[el.dataset.trial];
+        if (state === "CONSUMED") {
+          const at = me.trial_resets_at && me.trial_resets_at[el.dataset.trial];
+          el.textContent = at
+            ? "Kembali " + new Date(at * 1000).toLocaleString("id-ID", { dateStyle: "medium" })
+            : "Sudah digunakan";
+          el.className = "badge s-coming_soon";
+          return;
+        }
+        const [text, cls] = LABEL[state] || ["—", ""];
         el.textContent = text;
         el.className = "badge " + cls;
       });

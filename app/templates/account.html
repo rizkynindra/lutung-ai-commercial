@@ -36,7 +36,7 @@
         <span class="icon" aria-hidden="true">{{ t.icon }}</span>
         <div class="access-info">
           <strong>{{ t.name }}</strong>
-          <span {% if t.access_mode == 'trial' %}data-trial-note="{{ t.slug }}"{% endif %}>{% if t.access_mode == 'trial' %}1x uji coba gratis per akun{% else %}Gratis, tanpa LUTUNG Credits · rate limit berlaku{% endif %}</span>
+          <span {% if t.access_mode == 'trial' %}data-trial-note="{{ t.slug }}"{% endif %}>{% if t.access_mode == 'trial' %}1x uji coba gratis tiap {{ trial_days }} hari{% else %}Gratis, tanpa LUTUNG Credits · rate limit berlaku{% endif %}</span>
         </div>
         {% if t.access_mode == 'trial' %}
           <span class="badge" data-trial="{{ t.slug }}">—</span>

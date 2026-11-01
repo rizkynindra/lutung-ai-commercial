@@ -59,7 +59,8 @@ templates.env.globals.update(
     dev_auth=auth.DEV_AUTH, notice_version=NOTICE_VERSION,
     status_label={"available": "Tersedia", "beta": "Beta", "coming_soon": "Segera Hadir",
                   "maintenance": "Pemeliharaan", "unavailable": "Tidak Tersedia"},
-    access_label={"free": "Gratis", "trial": "1x uji coba gratis", "none": "Segera Hadir"},
+    trial_days=db.TRIAL_PERIOD_S // 86400,
+    access_label={"free": "Gratis", "trial": f"1x tiap {db.TRIAL_PERIOD_S // 86400} hari", "none": "Segera Hadir"},
     live=LIVE,
     asset_v=lambda: int(max(f.stat().st_mtime for f in (BASE / "static").iterdir())),  # cache-busting
 )
@@ -84,8 +85,11 @@ async def request_context(request: Request, call_next):
     return response
 
 
-def err(rid, code, message, status, headers=None):
-    return JSONResponse({"request_id": rid, "error": {"code": code, "message": message}}, status, headers=headers)
+def err(rid, code, message, status, headers=None, extra=None):
+    body = {"request_id": rid, "error": {"code": code, "message": message}}
+    if extra:
+        body.update(extra)
+    return JSONResponse(body, status, headers=headers)
 
 
 # ---------- abuse controls ----------
@@ -154,9 +158,17 @@ def me(request: Request):
         user = current_user(request)
     except auth.AuthError:
         return err(request.state.rid, "UNAUTHORIZED", "Sign in again.", 401)
-    trials = {t["slug"]: db.trial_status(user["id"], t["slug"]) for t in registry() if t.get("access_mode") == "trial"}
+    trials, resets = {}, {}
+    for t in registry():
+        if t.get("access_mode") != "trial":
+            continue
+        status, resets_at = db.trial_state(user["id"], t["slug"])
+        trials[t["slug"]] = status
+        if resets_at:
+            resets[t["slug"]] = resets_at
     return {"email": user["email"], "display_name": user["display_name"], "trials": trials,
-            "admin": user["admin"], "consent": db.has_consent(user["id"], NOTICE_VERSION)}
+            "trial_resets_at": resets, "admin": user["admin"],
+            "consent": db.has_consent(user["id"], NOTICE_VERSION)}
 
 
 @app.post("/api/v1/consent")
@@ -319,14 +331,16 @@ async def playground_run(slug: str, request: Request):
     if sem.locked():
         return err(rid, "SERVICE_UNAVAILABLE", "Service is busy. Please retry shortly.", 503, {"Retry-After": "10"})
 
-    # Admins skip the one-success trial cap. Per-minute rate limits above still apply.
+    # Admins skip the trial cap. Per-minute rate limits above still apply.
     trial = t["access_mode"] == "trial" and not user["admin"]
     if trial:
         state = db.reserve_trial(user["id"], slug, rid, lease_s=limits["timeout_s"] + 60)
         if state == "CONSUMED":
+            _, resets_at = db.trial_state(user["id"], slug)
             db.record_execution(rid, user["id"], slug, "blocked", started, "TRIAL_ALREADY_USED")
             return err(rid, "TRIAL_ALREADY_USED",
-                       "Free trial already used. Paid access is not available yet; contact the team for pilot access.", 403)
+                       f"Free trial already used. It is available again {db.TRIAL_PERIOD_S // 86400} days after the successful request.",
+                       403, extra={"resets_at": resets_at})
         if state == "IN_PROGRESS":
             return err(rid, "TRIAL_IN_PROGRESS", "A trial request is already processing.", 409)
 

@@ -7,7 +7,7 @@
   <p class="lead">{{ t.description }}</p>
   <p class="tags">
     <span class="badge s-{{ t.status }}">{{ status_label[t.status] }}</span>
-    <span class="chip">{% if t.access_mode == 'free' %}Free · no LUTUNG Credits{% else %}1 free successful trial per account{% endif %}</span>
+    <span class="chip">{% if t.access_mode == 'free' %}Free · no LUTUNG Credits{% else %}1 free successful trial every {{ trial_days }} days{% endif %}</span>
     {% if t.playground_enabled and t.status in live %}<a class="tag-link" href="/playground/{{ t.slug }}">Try in Playground →</a>{% endif %}
   </p>
 </header>

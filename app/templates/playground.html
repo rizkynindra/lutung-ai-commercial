@@ -77,16 +77,15 @@
         <label for="negative">Yang dihindari
           <textarea id="negative" name="negative_prompt" rows="2" maxlength="{{ t.limits.prompt_max }}" placeholder="Opsional"></textarea>
         </label>
-        <div class="field-row thirds">
-          <label for="width">Lebar
-            <input id="width" name="width" type="number" inputmode="numeric" required
-                   min="{{ t.limits.size_min }}" max="{{ t.limits.size_max }}" step="{{ t.limits.size_step }}"
-                   value="{{ t.limits.default_size }}" aria-describedby="size-hint">
-          </label>
-          <label for="height">Tinggi
-            <input id="height" name="height" type="number" inputmode="numeric" required
-                   min="{{ t.limits.size_min }}" max="{{ t.limits.size_max }}" step="{{ t.limits.size_step }}"
-                   value="{{ t.limits.default_size }}" aria-describedby="size-hint">
+        <div class="field-row pair">
+          <label for="aspect">Ukuran
+            <select id="aspect" aria-describedby="size-hint">
+              <option value="1024x1024" selected>1:1 (1024 × 1024)</option>
+              <option value="768x1024">3:4 (768 × 1024)</option>
+              <option value="1024x768">4:3 (1024 × 768)</option>
+              <option value="1024x576">16:9 (1024 × 576)</option>
+              <option value="576x1024">9:16 (576 × 1024)</option>
+            </select>
           </label>
           <label for="steps">Steps
             <input id="steps" name="steps" type="number" inputmode="numeric" required
@@ -94,7 +93,9 @@
                    value="{{ t.limits.steps_default }}" aria-describedby="size-hint">
           </label>
         </div>
-        <p class="field-hint" id="size-hint">Lebar dan tinggi kelipatan {{ t.limits.size_step }}, dari {{ t.limits.size_min }} sampai {{ t.limits.size_max }} piksel. Steps {{ t.limits.steps_min }} sampai {{ t.limits.steps_max }}.</p>
+        <input type="hidden" id="width" name="width" value="1024">
+        <input type="hidden" id="height" name="height" value="1024">
+        <p class="field-hint" id="size-hint">Lebar dan tinggi mengikuti rasio yang dipilih. Steps {{ t.limits.steps_min }} sampai {{ t.limits.steps_max }}.</p>
         <label for="seed">Seed
           <input id="seed" name="seed" type="number" inputmode="numeric" min="0" max="2147483647" step="1" aria-describedby="seed-hint">
         </label>

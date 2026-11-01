@@ -75,7 +75,7 @@
     <button type="button" class="btn ghost" id="auth-close">Tutup</button>
   </div>
 </dialog>
-<script>window.LUTUNG_CONFIG = {{ {"firebase": firebase, "devAuth": dev_auth, "noticeVersion": notice_version} | tojson }};</script>
+<script>window.LUTUNG_CONFIG = {{ {"firebase": firebase, "devAuth": dev_auth, "noticeVersion": notice_version, "trialDays": trial_days} | tojson }};</script>
 {% if firebase.apiKey %}
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>

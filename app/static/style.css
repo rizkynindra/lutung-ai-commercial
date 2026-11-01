@@ -178,7 +178,7 @@ code { font-family: ui-monospace, Consolas, monospace; font-size: 0.92em; }
 .advanced[open] summary { margin-bottom: 12px; }
 .advanced label { margin-top: 12px; }
 .field-row { display: grid; gap: 12px; grid-template-columns: 1fr; }
-@media (min-width: 560px) { .field-row.thirds { grid-template-columns: 1fr 1fr 1fr; } }
+@media (min-width: 560px) { .field-row.thirds { grid-template-columns: 1fr 1fr 1fr; } .field-row.pair { grid-template-columns: 1fr 1fr; } }
 .field-hint { margin: 0; color: var(--muted); font-size: 0.85rem; font-weight: 400; }
 #result-image { display: block; width: auto; height: auto; max-width: 100%; max-height: 70vh; object-fit: contain; margin: 0 auto 12px; border: 1px solid var(--line); border-radius: 8px; background: #f6f9fc; }
 /* Checker shows a transparent PNG. A flat fill would hide the empty pixels. */

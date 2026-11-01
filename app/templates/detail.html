@@ -56,7 +56,7 @@
     <dl class="summary">
       <dt>Status</dt><dd>{{ status_label[t.status] }}</dd>
       <dt>Kategori</dt><dd>{{ t.category }}</dd>
-      <dt>Akses</dt><dd>{% if t.access_mode == 'free' %}Gratis, tanpa LUTUNG Credits{% elif t.access_mode == 'trial' %}1x uji coba gratis per akun{% else %}Belum tersedia{% endif %}</dd>
+      <dt>Akses</dt><dd>{% if t.access_mode == 'free' %}Gratis, tanpa LUTUNG Credits{% elif t.access_mode == 'trial' %}1x uji coba gratis tiap {{ trial_days }} hari{% else %}Belum tersedia{% endif %}</dd>
       {% if t.limits %}
       <dt>Format</dt><dd>{{ t.limits.formats | join(', ') }}</dd>
       <dt>Ukuran maks.</dt><dd>{{ t.limits.max_bytes // 1048576 }} MB</dd>

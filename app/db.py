@@ -10,6 +10,7 @@ import uuid
 
 DB_PATH = os.getenv("LUTUNG_DB_PATH", "lutung.db")
 FEEDBACK_LIST_LIMIT = 200
+TRIAL_PERIOD_S = 7 * 24 * 60 * 60
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS users (
@@ -59,20 +60,35 @@ def upsert_user(provider, subject, email, name):
                               (provider, subject)).fetchone())
 
 
-# --- Trial state machine: AVAILABLE -> RESERVED -> CONSUMED, RESERVED -> AVAILABLE on provider failure ---
+# --- Trial state machine: AVAILABLE -> RESERVED -> CONSUMED, RESERVED -> AVAILABLE on provider failure.
+# A successful trial stays CONSUMED until TRIAL_PERIOD_S after consumed_at, then it can be reserved again.
 
-def trial_status(user_id, tech):
+def _open_trial(status, consumed_at, now):
+    """Return (status, resets_at). A spent trial past the period counts as available."""
+    if status == "CONSUMED" and consumed_at and consumed_at <= now - TRIAL_PERIOD_S:
+        return "AVAILABLE", None
+    if status == "CONSUMED" and consumed_at:
+        return "CONSUMED", consumed_at + TRIAL_PERIOD_S
+    return status, None
+
+
+def trial_state(user_id, tech):
+    """Return (status, resets_at). resets_at is set only while a successful trial is still inside the period."""
+    now = time.time()
     with connect() as c:
-        row = c.execute("SELECT status FROM trial_entitlements WHERE user_id=? AND technology_id=?",
+        row = c.execute("SELECT status, consumed_at FROM trial_entitlements WHERE user_id=? AND technology_id=?",
                         (user_id, tech)).fetchone()
-    return row["status"] if row else "AVAILABLE"
+    if not row:
+        return "AVAILABLE", None
+    return _open_trial(row["status"], row["consumed_at"], now)
 
 
 def reserve_trial(user_id, tech, request_id, lease_s):
-    """Atomically reserve the one trial. Returns 'RESERVED', 'CONSUMED' or 'IN_PROGRESS'.
+    """Atomically reserve the trial. Returns 'RESERVED', 'CONSUMED' or 'IN_PROGRESS'.
 
     A RESERVED row older than lease_s is treated as abandoned and may be re-reserved.
     lease_s must exceed the provider timeout so a live request can never be overtaken.
+    A CONSUMED row older than TRIAL_PERIOD_S may be reserved again.
     """
     now = time.time()
     with connect() as c:
@@ -80,8 +96,10 @@ def reserve_trial(user_id, tech, request_id, lease_s):
                   (_id(), user_id, tech))
         cur = c.execute(
             "UPDATE trial_entitlements SET status='RESERVED', reserved_at=?, request_id=? "
-            "WHERE user_id=? AND technology_id=? AND (status='AVAILABLE' OR (status='RESERVED' AND reserved_at < ?))",
-            (now, request_id, user_id, tech, now - lease_s))
+            "WHERE user_id=? AND technology_id=? AND ("
+            "status='AVAILABLE' OR (status='RESERVED' AND reserved_at < ?) "
+            "OR (status='CONSUMED' AND consumed_at IS NOT NULL AND consumed_at <= ?))",
+            (now, request_id, user_id, tech, now - lease_s, now - TRIAL_PERIOD_S))
         if cur.rowcount == 1:
             return "RESERVED"
         status = c.execute("SELECT status FROM trial_entitlements WHERE user_id=? AND technology_id=?",
